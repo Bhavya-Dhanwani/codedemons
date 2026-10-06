@@ -24,7 +24,7 @@ function createApp(): Express {
     applyMiddlewares(app);
 
     // serving uploaded media (random file names, so they can be cached for long)
-    app.use("/uploads", express.static(uploadDirectory, { maxAge: "30d", immutable: true }));
+    app.use("/uploads", express.static(uploadDirectory, { maxAge: "30d", immutable: true, fallthrough: false }));
 
     // adding the index router to the app
     app.use("/api", router);
