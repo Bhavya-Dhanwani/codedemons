@@ -1,6 +1,6 @@
 // Static site copy. Projects and video reviews are managed in the admin panel (/admin).
 
-export const EMAIL = 'hello@codedemons.in' // TODO: your real inbox
+export const EMAIL = 'hello@codedemons.in'
 
 export const SERVICES = [
   { n: '01', t: 'Design', h: 'Interfaces that feel inevitable.', d: 'UI and UX, design systems, prototypes and identities with taste you can feel in the first scroll.', tags: ['UI / UX', 'Design systems', 'Branding', 'Prototyping'] },
@@ -10,8 +10,8 @@ export const SERVICES = [
 ]
 
 export const FOUNDERS = [
-  { name: 'Bhavya Dhanwani', role: 'Co-founder', line: 'Turns "what if" into shipped.', color: '#0d0d12' },
-  { name: 'Sameer Bhagtani', role: 'Co-founder', line: 'Makes things happen.', color: '#2b3bff' },
+  { name: 'Bhavya Dhanwani', role: 'Co-founder', line: 'Turns "what if" into shipped.', img: '/team/bhavya.webp', url: 'https://bhavyadhanwani.dev' },
+  { name: 'Sameer Bhagtani', role: 'Co-founder', line: 'Makes things happen.', img: '/team/sameer.webp', url: 'https://sameerbhagtani.dev' },
 ]
 
 export const PROCESS = [

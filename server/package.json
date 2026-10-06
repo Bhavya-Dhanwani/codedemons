@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
     "test": "jest",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "copy-db": "tsx src/copy-db.ts"
   },
   "dependencies": {
     "@getbrevo/brevo": "^6.0.3",

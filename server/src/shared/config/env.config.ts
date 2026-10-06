@@ -20,6 +20,8 @@ const envSchema = z.object({
         if (typeof val === "string") return val.toLowerCase() === "true";
         return val;
     }, z.boolean()).default(envConstants.SEND_MAIL),
+    // inbox that receives contact form inquiries
+    CONTACT_EMAIL: z.string().default(envConstants.CONTACT_EMAIL),
     GOOGLE_CLIENT_ID: z.string().default(envConstants.GOOGLE_CLIENT_ID),
     GOOGLE_CLIENT_SECRET: z.string().default(envConstants.GOOGLE_CLIENT_SECRET),
     GOOGLE_REDIRECT_URI: z.string().url().default(envConstants.GOOGLE_REDIRECT_URI),

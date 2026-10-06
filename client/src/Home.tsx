@@ -5,7 +5,7 @@ import { useGSAP } from '@gsap/react'
 import { Reveal, ScrubText, Magnetic, Counter, Marquee, heroScroll, peekScroll } from './ui'
 import { Mark } from './Logo'
 import { EMAIL, SERVICES, FOUNDERS, PROCESS, FAQ } from './data'
-import { useReviews, ik, ikPoster, type Review } from './api'
+import { api, useReviews, ik, ikPoster, type Review } from './api'
 import { FeaturedWork } from './Work'
 
 const Scene = lazy(() => import('./Scene'))
@@ -144,10 +144,10 @@ function Founders() {
         <p className="lead">You talk directly to the people designing and coding your product. No account managers, no hand offs, nothing lost in translation.</p>
       </div>
       <div className="founder-grid">
-        {FOUNDERS.map((f, i) => (
-          <Tilt key={f.name}>
-            <div className="founder-art" style={{ ['--c' as string]: f.color }}>
-              <div className={'buddy' + (i ? ' short' : '')}><i /><i /></div>
+        {FOUNDERS.map((f) => (
+          <Tilt key={f.name} href={f.url}>
+            <div className="founder-art">
+              <img src={f.img} alt={f.name} loading="lazy" />
             </div>
             <div className="founder-info">
               <h3>{f.name}</h3>
@@ -161,14 +161,14 @@ function Founders() {
   )
 }
 
-function Tilt({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null)
+function Tilt({ children, href }: { children: React.ReactNode; href: string }) {
+  const ref = useRef<HTMLAnchorElement>(null)
   const move = (e: React.MouseEvent) => {
     const r = ref.current!.getBoundingClientRect()
     gsap.to(ref.current, { rotateY: ((e.clientX - r.left) / r.width - 0.5) * 12, rotateX: -((e.clientY - r.top) / r.height - 0.5) * 12, duration: 0.5 })
   }
   const leave = () => gsap.to(ref.current, { rotateX: 0, rotateY: 0, duration: 0.8, ease: 'elastic.out(1,0.4)' })
-  return <div className="founder" ref={ref} onMouseMove={move} onMouseLeave={leave}>{children}</div>
+  return <a className="founder" href={href} target="_blank" rel="noopener" data-cursor="Visit" ref={ref} onMouseMove={move} onMouseLeave={leave}>{children}</a>
 }
 
 function VideoCard({ r }: { r: Review }) {
@@ -254,6 +254,54 @@ function Faq() {
   )
 }
 
+function ContactForm() {
+  const [picked, setPicked] = useState<string[]>([])
+  const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [error, setError] = useState('')
+  const toggle = (t: string) => setPicked((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]))
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const f = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>
+    setState('sending'); setError('')
+    try {
+      await api('/contact', { method: 'POST', body: JSON.stringify({ ...f, services: picked }) })
+      setState('sent')
+    } catch (err) {
+      setError((err as Error).message); setState('idle')
+    }
+  }
+
+  if (state === 'sent') return (
+    <div className="cf-done" role="status">
+      <span className="accent-line">Summoned.</span>
+      <p>Your message is with both founders. Check your inbox, we'll reply within 24 hours.</p>
+    </div>
+  )
+
+  return (
+    <form className="cf" onSubmit={submit}>
+      <label><span className="mono">Your name</span><input name="name" required minLength={2} maxLength={100} autoComplete="name" placeholder="Jane Doe" /></label>
+      <label><span className="mono">Email</span><input name="email" type="email" required maxLength={200} autoComplete="email" placeholder="jane@company.com" /></label>
+      <label className="cf-wide"><span className="mono">Company <i>(optional)</i></span><input name="company" maxLength={120} autoComplete="organization" placeholder="Acme Inc." /></label>
+      <fieldset className="cf-wide">
+        <legend className="mono">I need help with</legend>
+        <div className="cf-chips">
+          {SERVICES.map((s) => (
+            <button type="button" key={s.t} aria-pressed={picked.includes(s.t)} onClick={() => toggle(s.t)}>{s.t}</button>
+          ))}
+        </div>
+      </fieldset>
+      <label className="cf-wide"><span className="mono">Tell us about it</span><textarea name="message" required minLength={10} maxLength={4000} rows={4} placeholder="What are you building, and when do you need it?" /></label>
+      <input name="website" className="cf-hp" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+      <div className="cf-wide cf-foot">
+        <p className="cf-err" role="alert">{error}</p>
+        <Magnetic><button className="cta-btn" disabled={state === 'sending'} data-cursor="hidden">{state === 'sending' ? 'Sending…' : 'Send it'}</button></Magnetic>
+      </div>
+    </form>
+  )
+}
+
 function Cta() {
   const ref = useRef<HTMLElement>(null)
   useGSAP(() => {
@@ -264,7 +312,7 @@ function Cta() {
       <Label n="09" t="Let's talk" />
       <Reveal text="Ready when you are." className="h2 cta-small" />
       <Reveal text="Summon us." className="mega accent-line" delay={0.1} />
-      <Magnetic><a href={`mailto:${EMAIL}`} className="cta-btn" data-cursor="hidden">Start a project</a></Magnetic>
+      <ContactForm />
       <p className="mono">or write to <a href={`mailto:${EMAIL}`}>{EMAIL}</a></p>
       <div className="cta-peek"><Safe><Suspense fallback={null}><Scene peek /></Suspense></Safe></div>
     </section>
