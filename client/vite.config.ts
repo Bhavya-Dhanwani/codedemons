@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     // the Express API (server/) runs on :5000
-    proxy: { '/api': 'http://localhost:5000', '/uploads': 'http://localhost:5000' },
+    proxy: { '/api': 'http://localhost:5000' },
   },
 })

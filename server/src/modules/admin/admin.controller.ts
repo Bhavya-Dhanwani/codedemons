@@ -48,7 +48,7 @@ const reviewSchema = z.object({
 });
 
 // parses a body or throws a readable 400
-function parse<T extends z.ZodTypeAny>(schema: T, body: unknown): z.infer<T> {
+export function parse<T extends z.ZodTypeAny>(schema: T, body: unknown): z.infer<T> {
     const result = schema.safeParse(body);
     if (!result.success) {
         const issue = result.error.issues[0];
@@ -88,7 +88,7 @@ class AdminController {
         const a = attempts.get(ip);
         if (a && a.until > now && a.n >= MAX_ATTEMPTS) throw new ApiError(429, "Too many attempts. Try again in a few minutes.");
 
-        const { email, password } = parse(z.object({ email: z.string().max(200), password: z.string().max(200) }), req.body);
+        const { email, password } = parse(z.object({ email: z.string().trim().min(1, "Enter your email").max(200), password: z.string().min(1, "Enter your password").max(200) }), req.body);
 
         if (!(same(email.trim().toLowerCase(), env.ADMIN_EMAIL.toLowerCase()) && same(password, env.ADMIN_PASSWORD))) {
             attempts.set(ip, { n: (a && a.until > now ? a.n : 0) + 1, until: now + WINDOW_MS });
@@ -179,21 +179,17 @@ class AdminController {
 
     // one-time signature so the admin browser can upload straight to ImageKit (private key never leaves the server)
     imagekitAuth = async (req: Request, res: Response) => {
-        if (!env.IMAGEKIT_PUBLIC_KEY || !env.IMAGEKIT_PRIVATE_KEY || !env.IMAGEKIT_URL_ENDPOINT) return Ok(res, "ImageKit not configured", { enabled: false });
+        if (!env.IMAGEKIT_PUBLIC_KEY || !env.IMAGEKIT_PRIVATE_KEY || !env.IMAGEKIT_URL_ENDPOINT) {
+            throw new ApiError(503, "Uploads need ImageKit. Add IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT to server/.env.");
+        }
         const token = crypto.randomUUID();
         const expire = Math.floor(Date.now() / 1000) + 30 * 60;
         const signature = crypto.createHmac("sha1", env.IMAGEKIT_PRIVATE_KEY).update(token + expire).digest("hex");
         return Ok(res, "ImageKit upload auth", {
-            enabled: true, token, expire, signature,
+            token, expire, signature,
             publicKey: env.IMAGEKIT_PUBLIC_KEY,
             folder: env.IMAGEKIT_FOLDER,
         });
-    };
-
-    // local disk fallback when ImageKit is not configured
-    upload = async (req: Request, res: Response) => {
-        if (!req.file) throw new BadRequest("No file uploaded");
-        return Created(res, "Uploaded", { url: `/uploads/${req.file.filename}`, type: req.file.mimetype, size: req.file.size });
     };
 
 }

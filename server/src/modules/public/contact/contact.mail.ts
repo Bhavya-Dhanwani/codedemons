@@ -4,23 +4,23 @@ import env from "../../../shared/config/env.config.js";
 export type Inquiry = { name: string; email: string; company: string; services: string[]; message: string };
 
 // every user-supplied value goes through this before touching HTML
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-const nl2br = (s: string) => esc(s).replace(/\r?\n/g, "<br>");
+export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+export const nl2br = (s: string) => esc(s).replace(/\r?\n/g, "<br>");
 
 const SANS = "'Inter Tight',Helvetica,Arial,sans-serif";
 const SERIF = "'Instrument Serif',Georgia,'Times New Roman',serif";
 const MONO = "'JetBrains Mono',Menlo,Consolas,monospace";
 const BLUE = "#2b3bff";
-const site = env.FRONTEND_URL.replace(/\/$/, "");
+export const site = env.FRONTEND_URL.replace(/\/$/, "");
 
 const label = (t: string, color = BLUE) =>
     `<div style="font:500 11px/1.4 ${MONO};letter-spacing:.08em;text-transform:uppercase;color:${color};">${t}</div>`;
 
-const button = (href: string, text: string) =>
+export const button = (href: string, text: string) =>
     `<a href="${href}" style="display:inline-block;padding:16px 30px;border-radius:999px;background:${BLUE};color:#ffffff;font:500 16px/1 ${SANS};text-decoration:none;">${text}</a>`;
 
 // shared shell: warm paper background, dark rounded header with the two-demon mark, white body
-function shell(preheader: string, tag: string, headline: string, accent: string, body: string) {
+export function shell(preheader: string, tag: string, headline: string, accent: string, body: string) {
     return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">

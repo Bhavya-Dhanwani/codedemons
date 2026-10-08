@@ -2,8 +2,9 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Billboard, Image } from '@react-three/drei'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { ik, ikPoster, type Project } from './api'
-import { workIntro, go, inSpinZone, scrollByPx } from './ui'
+import { ik, ikPoster } from '../../../shared/lib/media'
+import type { Project } from '../../../shared/types/content'
+import { workIntro, go, inSpinZone, scrollByPx } from '../../../shared/lib/motion'
 
 const { damp, clamp, lerp } = THREE.MathUtils // damp: frame-rate independent easing
 

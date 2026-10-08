@@ -2,7 +2,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, ContactShadows } from '@react-three/drei'
 import { useRef } from 'react'
 import * as THREE from 'three'
-import { heroScroll, peekScroll } from './ui'
+import { heroScroll, peekScroll } from '../../../shared/lib/motion'
 
 const { damp } = THREE.MathUtils
 

@@ -22,7 +22,8 @@ RUN npm i
 
 COPY server/ ./
 
-RUN npm run build
+# googleapis types push tsc past the default heap
+RUN NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
 # COMBINED
 FROM node:20-alpine AS runner

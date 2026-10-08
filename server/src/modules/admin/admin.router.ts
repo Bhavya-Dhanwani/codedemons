@@ -2,7 +2,7 @@
 import express from "express";
 import AdminController from "./admin.controller.js";
 import adminMiddleware from "../../shared/middlewares/admin.middleware.js";
-import upload from "../../shared/config/upload.config.js";
+import crmRouter from "./crm.router.js";
 
 // making the router
 const router = express.Router();
@@ -44,17 +44,17 @@ router.delete("/reviews/:id", adminController.deleteReview);
 
 /*
     @route GET /api/admin/imagekit-auth
-    @desc Short-lived signature for a direct browser upload to ImageKit ({ enabled: false } when not configured)
+    @desc Short-lived signature for a direct browser upload to ImageKit. All media lives on ImageKit; files never touch this server.
     @access Admin
 */
 router.get("/imagekit-auth", adminController.imagekitAuth);
 
 /*
-    @route POST /api/admin/upload
-    @desc Upload one image or video (multipart field "file")
+    @route /api/admin/crm/*, /api/admin/clients/*, /api/admin/invoices/*, /api/admin/docs/*
+    @desc Leads, clients, documents, invoices and licenses
     @access Admin
 */
-router.post("/upload", upload.single("file"), adminController.upload);
+router.use("/", crmRouter);
 
 // exporting the router
 export default router;

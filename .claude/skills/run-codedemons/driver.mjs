@@ -28,7 +28,8 @@ function run(args, env, { wait } = {}) {
     // `node --import tsx` instead of npx: no shell, so killing the pid actually kills the server
     const p = spawn(process.execPath, ["--import", "tsx", ...args], { cwd: serverDir, env: { ...process.env, ...env }, stdio: ["ignore", "pipe", "pipe"] });
     const out = [];
-    p.stdout.on("data", (d) => out.push(d));
+    // portal login codes are only logged when mail is off; echo them so a flow can use one
+    p.stdout.on("data", (d) => { out.push(d); for (const m of String(d).match(/\[Portal\][^\n"\x1b]*/g) ?? []) log(m); });
     p.stderr.on("data", (d) => out.push(d));
     if (!wait) return children.push(p), Object.assign(p, { out });
     return new Promise((res, rej) => p.on("exit", (c) => (c ? rej(new Error(`${args.join(" ")} exited ${c}\n${Buffer.concat(out)}`)) : res(String(Buffer.concat(out))))));
@@ -46,7 +47,7 @@ async function up() {
     const env = {
         MONGO_URI: mongo.getUri("codedemons"), PORT: String(API_PORT), NODE_ENV: "development",
         ADMIN_EMAIL: ADMIN.email, ADMIN_PASSWORD: ADMIN.password, SEND_MAIL: "false", CORS_ORIGIN: "*",
-        // force local-disk uploads so the driver never writes to the real ImageKit account
+        // no ImageKit keys: the test stack can never write to the real ImageKit account (uploads answer 503)
         IMAGEKIT_PUBLIC_KEY: "", IMAGEKIT_PRIVATE_KEY: "", IMAGEKIT_URL_ENDPOINT: "",
     };
     log("mongo", env.MONGO_URI);
@@ -99,6 +100,7 @@ async function smoke() {
     await page.fill('input[type="password"]', ADMIN.password);
     await page.click("button:has-text('Log in')");
     await page.getByRole("button", { name: "Log out" }).waitFor();
+    await page.getByRole("link", { name: "Projects" }).click(); // admin opens on Clients; tabs are router links
     await page.waitForTimeout(1000);
     log("admin rows with Edit buttons:", await page.getByRole("button", { name: "Edit" }).count());
     await shot("admin");

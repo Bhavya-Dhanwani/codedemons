@@ -1,6 +1,8 @@
 export default {
   testEnvironment: 'node',
-  preset: 'ts-jest/presets/default-esm',
+  // type-checking is tsc's job; ts-jest checking googleapis types runs out of memory
+  extensionsToTreatAsEsm: ['.ts'],
+  transform: { '^.+\\.ts$': ['ts-jest', { useESM: true, isolatedModules: true, diagnostics: false }] },
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'

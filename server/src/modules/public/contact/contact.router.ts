@@ -6,6 +6,7 @@ import sendMail from "../../../shared/utils/sendMail.util.js";
 import BadRequest from "../../../shared/errors/BadRequest.error.js";
 import ApiError from "../../../shared/utils/ApiError.util.js";
 import Ok from "../../../shared/responses/Ok.response.js";
+import Client from "../../../shared/models/client.model.js";
 import { inquiryMail, thankYouMail } from "./contact.mail.js";
 
 // making the router
@@ -45,10 +46,13 @@ router.post("/contact", async (req: Request, res: Response) => {
     if (recent.length >= LIMIT) throw new ApiError(429, "You've sent a few messages already. Please try again later or email us directly.");
     sent.set(ip, [...recent, now]);
 
-    // the inquiry must reach us; only then thank the sender
+    // saved as a lead first, so nothing is lost if mail is down; follow up within a day
+    const saved = await Client.create({ ...inquiry, source: "form", followUpAt: new Date(now + 864e5) }).then(() => true, () => false);
+
+    // the inquiry must reach us (in the CRM or our inbox); only then thank the sender
     const ours = inquiryMail(inquiry);
     const delivered = await sendMail(env.CONTACT_EMAIL, ours.subject, ours.html, { email: inquiry.email, name: inquiry.name });
-    if (!delivered) throw new ApiError(502, `We couldn't send that just now. Please email us at ${env.CONTACT_EMAIL}.`);
+    if (!delivered && !saved) throw new ApiError(502, `We couldn't send that just now. Please email us at ${env.CONTACT_EMAIL}.`);
 
     const theirs = thankYouMail(inquiry);
     void sendMail(inquiry.email, theirs.subject, theirs.html, { email: env.CONTACT_EMAIL });

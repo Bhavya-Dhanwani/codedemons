@@ -8,7 +8,6 @@ import applyMiddlewares from "./shared/middlewares/index.middleware.js";
 import notFoundHandler from "./shared/middlewares/NotFound.middleware.js";
 import errorHandler from "./shared/middlewares/error.middleware.js";
 import { setupSwagger } from "./shared/swagger.js";
-import { uploadDirectory } from "./shared/config/upload.config.js";
 
 const serverDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDirectory = path.join(serverDirectory, "public");
@@ -22,9 +21,6 @@ function createApp(): Express {
 
     // applying middlewares
     applyMiddlewares(app);
-
-    // serving uploaded media (random file names, so they can be cached for long)
-    app.use("/uploads", express.static(uploadDirectory, { maxAge: "30d", immutable: true, fallthrough: false }));
 
     // adding the index router to the app
     app.use("/api", router);

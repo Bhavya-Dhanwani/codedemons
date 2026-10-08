@@ -26,7 +26,7 @@ const envSchema = z.object({
     GOOGLE_CLIENT_SECRET: z.string().default(envConstants.GOOGLE_CLIENT_SECRET),
     GOOGLE_REDIRECT_URI: z.string().url().default(envConstants.GOOGLE_REDIRECT_URI),
     FRONTEND_URL: z.string().default(envConstants.FRONTEND_URL),
-    // ImageKit media storage (all empty = store uploads on local disk)
+    // ImageKit media storage: every upload goes here (required for uploads to work)
     IMAGEKIT_PUBLIC_KEY: z.string().default(envConstants.IMAGEKIT_PUBLIC_KEY),
     IMAGEKIT_PRIVATE_KEY: z.string().default(envConstants.IMAGEKIT_PRIVATE_KEY),
     IMAGEKIT_URL_ENDPOINT: z.string().default(envConstants.IMAGEKIT_URL_ENDPOINT),
@@ -34,6 +34,14 @@ const envSchema = z.object({
     // admin panel login (empty disables it)
     ADMIN_EMAIL: z.string().default(envConstants.ADMIN_EMAIL),
     ADMIN_PASSWORD: z.string().default(envConstants.ADMIN_PASSWORD),
+    // seed for the license signing key; changing it invalidates every issued lease
+    LICENSE_SECRET: z.string().default(envConstants.LICENSE_SECRET),
+    // UPI id that clients pay to (e.g. codedemons@okicici)
+    UPI_ID: z.string().default(envConstants.UPI_ID),
+    UPI_NAME: z.string().default(envConstants.UPI_NAME),
+    // Razorpay keys: when set, payments are detected automatically
+    RAZORPAY_KEY_ID: z.string().default(envConstants.RAZORPAY_KEY_ID),
+    RAZORPAY_KEY_SECRET: z.string().default(envConstants.RAZORPAY_KEY_SECRET),
 });
 
 // parsing and validating environment variables

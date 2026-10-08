@@ -19,6 +19,11 @@ const envConstants = {
     IMAGEKIT_FOLDER: "/codedemons",
     ADMIN_EMAIL: "",
     ADMIN_PASSWORD: "",
+    LICENSE_SECRET: "",
+    UPI_ID: "",
+    UPI_NAME: "codedemons",
+    RAZORPAY_KEY_ID: "",
+    RAZORPAY_KEY_SECRET: "",
 } as const;
 
 export default envConstants;
