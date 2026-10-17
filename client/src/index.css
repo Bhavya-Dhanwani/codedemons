@@ -889,3 +889,7 @@ body.de-open { overflow: hidden; }
 .cv-custom summary { cursor: pointer; font-size: 13px; color: var(--blue); font-weight: 500; }
 .cv-custom > .ad-btn { justify-self: start; }
 .ad-login .ad-back:disabled { cursor: default; opacity: .6; }
+.crash { width: min(520px, 100%); display: grid; gap: 16px; padding: 32px; background: #fff; border: 1px solid var(--line); border-radius: 24px; }
+.crash h1 { font-size: 36px; font-weight: 500; letter-spacing: -.04em; }
+.crash p { color: var(--muted); }
+.crash code { display: block; padding: 12px 14px; background: var(--ink); color: #e9e8e2; border-radius: 10px; font: 12px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
