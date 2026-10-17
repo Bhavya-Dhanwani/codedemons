@@ -14,10 +14,11 @@ const envSchema = z.object({
     CORS_ORIGIN: z.string().default(envConstants.CORS_ORIGIN),
     ACCESS_TOKEN_SECRET: z.string().default(envConstants.ACCESS_TOKEN_SECRET),
     REFRESH_TOKEN_SECRET: z.string().default(envConstants.REFRESH_TOKEN_SECRET),
-    BREVO_API_KEY: z.string().default(envConstants.BREVO_API_KEY),
+    BREVO_API_KEY: z.string().trim().transform((v) => v.replace(/^["']|["']$/g, "")).default(envConstants.BREVO_API_KEY),
     SENDING_USER: z.string().default(envConstants.SENDING_USER),
     SEND_MAIL: z.preprocess((val) => {
-        if (typeof val === "string") return val.toLowerCase() === "true";
+        // dashboards often save "true" with quotes or a stray space
+        if (typeof val === "string") return /^(true|1|yes|on)$/i.test(val.trim().replace(/^["']|["']$/g, ""));
         return val;
     }, z.boolean()).default(envConstants.SEND_MAIL),
     // inbox that receives contact form inquiries
