@@ -33,10 +33,19 @@ function createApp(): Express {
 
     // Serve a built frontend copied into server/public, when present.
     if (existsSync(frontendIndex)) {
-        app.use(express.static(publicDirectory));
+        // hashed build files never change: cache them for a year. The page itself is always re-checked,
+        // so after a deploy browsers pick up the new file names instead of asking for deleted ones.
+        app.use("/assets", express.static(path.join(publicDirectory, "assets"), { immutable: true, maxAge: "1y" }));
+        // a file from an older build: a real 404, never the page (browsers refuse HTML as CSS / JS)
+        app.use("/assets", (req, res) => { res.status(404).type("text/plain").send("Not found"); });
+        app.use(express.static(publicDirectory, { index: false }));
 
         // Express 5 requires a named wildcard. This lets client-side routes reload correctly.
-        app.get("/*path", (req, res) => res.sendFile(frontendIndex));
+        // "{*path}" also matches "/" itself, now that static files no longer serve index.html
+        app.get("/{*path}", (req, res) => {
+            res.setHeader("Cache-Control", "no-cache");
+            res.sendFile(frontendIndex);
+        });
     }
 
     // not found middleware
