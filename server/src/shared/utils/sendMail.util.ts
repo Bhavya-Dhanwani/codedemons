@@ -26,7 +26,8 @@ function sendMail(to: string, subject: string, html: string, replyTo?: { email: 
             })
             .then(() => true)
             .catch((err) => {
-                logger.error({ err, to, subject }, "Failed to send mail");
+                // the subject can carry a login code, so production logs keep only the recipient and Brevo's answer
+                logger.error({ err: prod ? { statusCode: err?.statusCode, body: err?.body } : err, to, ...(prod ? {} : { subject }) }, "Failed to send mail");
                 return false;
             });
     }

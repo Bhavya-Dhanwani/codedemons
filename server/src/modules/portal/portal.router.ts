@@ -44,8 +44,9 @@ const sendCode = async (client: InstanceType<typeof Client>) => {
     client.login = { code: hash(code), exp: new Date(Date.now() + 10 * 60 * 1000), tries: 0 };
     await client.save();
     if (!mailOn) logger.info(`[Portal] login code for ${client.email}: ${code}`);
-    await sendMail(client.email, `${code} is your codedemons login code`, clientMail(client.name, "Login code", "Here's your code.",
+    const sent = await sendMail(client.email, `${code} is your codedemons login code`, clientMail(client.name, "Login code", "Here's your code.",
         `<span style="font:600 34px/1 monospace;letter-spacing:.3em;">${code}</span><br><br>It works for 10 minutes. If you didn't ask for it, ignore this email.`, "Open the portal"));
+    if (!sent) throw new ApiError(502, "We couldn't send the email right now. Try again in a minute, or contact us at " + env.CONTACT_EMAIL);
 };
 
 /*
