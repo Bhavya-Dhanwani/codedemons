@@ -3,7 +3,7 @@ import { ErrorText } from '../../../shared/components/Feedback'
 import { CLIENT_TABS } from '../constants'
 import { useClientDrawer } from '../hooks/useClientDrawer'
 import { OverviewTab } from './tabs/OverviewTab'
-import { ProjectTab } from './tabs/ProjectTab'
+import { ProjectsTab } from './tabs/ProjectsTab'
 import { DocsTab } from './tabs/DocsTab'
 import { PaymentsTab } from './tabs/PaymentsTab'
 import { LicenseTab } from './tabs/LicenseTab'
@@ -22,7 +22,7 @@ export function ClientDrawer({ id, onClose }: { id: string; onClose: () => void 
         <ErrorText className="crm-err" onDismiss={a.clearError}>{cd.error}</ErrorText>
         <div className="ad-fields">
           {cd.tab === 'Overview' && <OverviewTab c={c} a={a} onDeleted={onClose} />}
-          {cd.tab === 'Project' && <ProjectTab c={c} a={a} />}
+          {cd.tab === 'Projects' && <ProjectsTab c={c} a={a} />}
           {cd.tab === 'Documents' && <DocsTab c={c} a={a} />}
           {cd.tab === 'Payments' && <PaymentsTab c={c} a={a} />}
           {cd.tab === 'License' && <LicenseTab c={c} a={a} />}

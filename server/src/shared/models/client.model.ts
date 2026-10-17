@@ -24,6 +24,7 @@ const clientSchema = new mongoose.Schema({
 
     // what the client sees in their portal
     portal: { type: Boolean, default: false },
+    // legacy: projects now live in ClientProject; these move into a first project on first read (project.util.ts)
     phase: { type: String, enum: PHASES, default: "planning" },
     milestones: [{ title: String, done: { type: Boolean, default: false } }],
     updates: [{ text: String, at: { type: Date, default: Date.now } }],
@@ -45,6 +46,8 @@ const clientSchema = new mongoose.Schema({
             accent: { type: String, default: "#2b3bff" },
             buttonLabel: { type: String, default: "" },
             buttonUrl: { type: String, default: "" },
+            // free-form design from the canvas designer (validated in crm.router.ts); null = the fields above
+            canvas: { type: mongoose.Schema.Types.Mixed, default: null },
         },
     },
 

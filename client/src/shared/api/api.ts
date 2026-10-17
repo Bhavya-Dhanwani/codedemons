@@ -47,3 +47,29 @@ export const api = {
   put: <T = null>(url: string, body?: unknown) => unwrap<T>(http.put(url, body)),
   del: <T = null>(url: string) => unwrap<T>(http.delete(url)),
 }
+
+/**
+ * POST and read a plain-text streamed answer chunk by chunk (the AI writer). Same auth as api.*;
+ * an error answer (JSON envelope) throws its message.
+ */
+export async function streamText(url: string, body: unknown, onText: (soFar: string) => void, signal?: AbortSignal) {
+  const scope = scopeOf(url)
+  const token = scope && tokenOf(scope)
+  const res = await fetch('/api' + url, {
+    method: 'POST', signal, body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  }).catch(() => { throw new Error('Network error, check your connection') })
+  if (!res.ok || !res.body) {
+    if (res.status === 401 && scope) onExpired(scope)
+    const j = await res.json().catch(() => null) as Envelope<unknown> | null
+    throw new Error(j?.message || `Request failed (${res.status})`)
+  }
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
+  let text = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) return text
+    text += value
+    onText(text)
+  }
+}

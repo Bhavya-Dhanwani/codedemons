@@ -11,16 +11,17 @@ export const ME_KEY = ['portal', 'me']
 export function usePortalLayout() {
   useBodyClass('admin-mode')
   const signedIn = !!useToken('portal')
-  const me = useQuery({ queryKey: ME_KEY, queryFn: portalApi.me, enabled: signedIn })
+  const me = useQuery({ queryKey: ME_KEY, queryFn: portalApi.me, enabled: signedIn, refetchInterval: 30_000 })
   const toSign = me.data?.docs.filter((d) => d.status === 'sent').length ?? 0
   const toPay = me.data?.invoices.filter((i) => i.status === 'due').length ?? 0
+  const unread = me.data?.projects.filter((p) => p.unread).length ?? 0
   return {
     signedIn,
     me: me.data,
     error: me.error?.message,
     logout: useLogout('portal'),
     tabs: [
-      { to: '/portal', label: 'Project', end: true },
+      { to: '/portal', label: 'Projects', end: true, badge: unread },
       { to: '/portal/documents', label: 'Documents', badge: toSign },
       { to: '/portal/payments', label: 'Payments', badge: toPay },
     ],

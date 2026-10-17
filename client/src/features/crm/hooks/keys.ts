@@ -6,4 +6,5 @@ export const crmKeys = {
   summary: ['admin', 'crm', 'summary'] as const,
   client: (id: string) => ['admin', 'crm', 'client', id] as const,
   doc: (id: string) => ['admin', 'crm', 'doc', id] as const,
+  project: (id: string) => ['admin', 'crm', 'project', id] as const,
 }

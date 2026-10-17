@@ -42,6 +42,9 @@ const envSchema = z.object({
     // Razorpay keys: when set, payments are detected automatically
     RAZORPAY_KEY_ID: z.string().default(envConstants.RAZORPAY_KEY_ID),
     RAZORPAY_KEY_SECRET: z.string().default(envConstants.RAZORPAY_KEY_SECRET),
+    // Mistral (via LangChain) writes document drafts in the CRM; empty turns the AI writer off
+    MISTRAL_API_KEY: z.string().default(envConstants.MISTRAL_API_KEY),
+    MISTRAL_MODEL: z.string().default(envConstants.MISTRAL_MODEL),
 });
 
 // parsing and validating environment variables

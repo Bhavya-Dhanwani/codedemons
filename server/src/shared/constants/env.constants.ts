@@ -24,6 +24,8 @@ const envConstants = {
     UPI_NAME: "codedemons",
     RAZORPAY_KEY_ID: "",
     RAZORPAY_KEY_SECRET: "",
+    MISTRAL_API_KEY: "",
+    MISTRAL_MODEL: "mistral-large-latest",
 } as const;
 
 export default envConstants;

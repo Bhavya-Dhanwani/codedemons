@@ -73,6 +73,8 @@ export const router = createBrowserRouter([
     errorElement: <RouteError />,
     children: [
       { index: true, loader: paidReturn, lazy: page(() => import('../features/portal/ui/PortalHome')) },
+      { path: 'projects/new', lazy: page(() => import('../features/portal/ui/project/NewProjectPage')) },
+      { path: 'projects/:id', lazy: page(() => import('../features/portal/ui/project/ProjectPage')) },
       { path: 'documents', lazy: page(() => import('../features/portal/ui/DocumentsPage')) },
       { path: 'documents/:id', lazy: page(() => import('../features/portal/ui/DocumentPage')) },
       { path: 'payments', lazy: page(() => import('../features/portal/ui/PaymentsPage')) },

@@ -12,6 +12,7 @@ export type Tile = { k: string; v: string; s: string; to?: string }
 
 const tilesOf = (sum: Summary): Tile[] => [
   { k: 'Follow up today', v: String(sum.due), s: sum.due ? 'Start here' : 'All caught up', to: 'due' },
+  { k: 'Unread messages', v: String(sum.inbox), s: sum.inbox ? `${count(sum.inbox, 'client')} waiting` : 'Inbox zero', to: 'inbox' },
   { k: 'Open pipeline', v: inr(sum.openValue), s: `${count(sum.openCount, 'deal')} in progress`, to: 'proposal' },
   { k: 'Unpaid', v: inr(sum.unpaidValue), s: count(sum.unpaidCount, 'invoice') },
   { k: 'Received this month', v: inr(sum.receivedThisMonth), s: new Date().toLocaleDateString('en-IN', { month: 'long' }) },
@@ -49,8 +50,8 @@ export function useCrmList() {
     tiles: sum.data ? tilesOf(sum.data) : [],
     rows: rows.data?.map(rowOf),
     error: rows.error?.message,
-    emptyText: view === 'due' ? 'Nobody to follow up with today.' : q ? 'No matches.' : 'Nobody here yet.',
-    showSeeAll: view === 'due',
+    emptyText: view === 'due' ? 'Nobody to follow up with today.' : view === 'inbox' ? 'No unread messages.' : q ? 'No matches.' : 'Nobody here yet.',
+    showSeeAll: view === 'due' || view === 'inbox',
     setView: (v: string) => dispatch(setView(v)),
     setQuery: (v: string) => dispatch(setQuery(v)),
     open: (id: string) => dispatch(openClient(id)),

@@ -18,6 +18,7 @@ export function useClientDrawer(id: string) {
     error: actions.error || client.error?.message,
     sub: c ? joinParts([c.company, c.email, c.phone], '  ·  ') : '',
     counts: {
+      Projects: c?.projects.filter((p) => p.unread).length,
       Documents: c?.docs.filter((d) => d.status === 'sent').length,
       Payments: c?.invoices.filter((i) => i.status !== 'paid').length,
     } as Partial<Record<ClientTab, number>>,

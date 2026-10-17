@@ -2,19 +2,11 @@ import { useState, type ChangeEvent } from 'react'
 import { useToast } from '../../../shared/hooks/useToast'
 import { day, isoDay } from '../../../shared/lib/format'
 import { LICENSE_STATE } from '../constants'
-import type { Client, MaintenancePage } from '../types'
+import { fromClassic, withDefaults } from '../lib/canvas'
+import type { Canvas, Client, MaintenancePage } from '../types'
 import type { ClientActions } from './useClientActions'
 
-// Same defaults and colour rules as the license script (server/src/modules/public/license/license.router.ts),
-// so the preview matches what visitors get.
-const PAGE_DEFAULTS: MaintenancePage = { heading: '', logo: '', bg: '#f2f1ed', fg: '#0d0d12', accent: '#2b3bff', buttonLabel: '', buttonUrl: '' }
-const DEFAULT_HEADING = 'Temporarily unavailable'
-const DEFAULT_MESSAGE = 'This website is under maintenance. Please check back soon.'
-const LINK = /^(https:\/\/[^\s"'<>]+|mailto:[^\s"'<>]+|tel:[\d+\s()-]+)$/
-const ink = (h: string) => {
-  const n = parseInt(h.slice(1), 16)
-  return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 < 150 ? '#fff' : '#0d0d12'
-}
+const PAGE_DEFAULTS: MaintenancePage = { heading: '', logo: '', bg: '#f2f1ed', fg: '#0d0d12', accent: '#2b3bff', buttonLabel: '', buttonUrl: '', canvas: null }
 
 /** Website license: on/off switch, install snippet, paid-until and grace settings, the maintenance page design. */
 export function useLicenseTab(c: Client, a: ClientActions) {
@@ -22,9 +14,11 @@ export function useLicenseTab(c: Client, a: ClientActions) {
   const l = c.license
   const savedPage = { ...PAGE_DEFAULTS, ...l.page }
   const [d, setD] = useState({ domain: l.domain, paidUntil: isoDay(l.paidUntil), graceDays: String(l.graceDays), message: l.message })
-  const [page, setPage] = useState<MaintenancePage>(savedPage)
-  const pageDirty = (Object.keys(PAGE_DEFAULTS) as (keyof MaintenancePage)[]).some((k) => page[k] !== savedPage[k])
-  const dirty = pageDirty || d.domain !== l.domain || d.paidUntil !== isoDay(l.paidUntil) || Number(d.graceDays) !== l.graceDays || d.message !== l.message
+  const [designing, setDesigning] = useState(false)
+  const dirty = d.domain !== l.domain || d.paidUntil !== isoDay(l.paidUntil) || Number(d.graceDays) !== l.graceDays || d.message !== l.message
+  // pages designed before the canvas open as the same layout, ready to move around
+  const canvas: Canvas = withDefaults(savedPage.canvas ?? fromClassic(savedPage, l.message))
+  const logo = savedPage.logo || canvas.els.find((e) => e.t === 'image' && e.src)?.src || ''
   const snippet = `<script src="${location.origin}/api/license/sdk.js" data-key="${l.key}"></script>`
   // fullstack apps: the guard runs on their server, before their app
   const serverSnippet = [
@@ -42,8 +36,6 @@ export function useLicenseTab(c: Client, a: ClientActions) {
   ].join('\n')
   const [text, tone] = LICENSE_STATE[c.licenseState]
   const goesDown = l.paidUntil && c.licenseState === 'grace' ? `, goes down ${day(new Date(new Date(l.paidUntil).getTime() + l.graceDays * 864e5).toISOString())}` : ''
-  const linkBad = !!page.buttonUrl.trim() && !LINK.test(page.buttonUrl.trim())
-
   return {
     exists: !!l.key,
     create: () => a.makeLicense('License created'),
@@ -54,26 +46,17 @@ export function useLicenseTab(c: Client, a: ClientActions) {
     serverSnippet,
     copy: (text: string) => navigator.clipboard.writeText(text).then(() => toast('Copied')),
     field: (k: keyof typeof d) => ({ value: d[k], onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setD({ ...d, [k]: e.target.value }) }),
-    page,
-    pageField: (k: keyof MaintenancePage) => ({ name: k, value: page[k], onChange: (e: ChangeEvent<HTMLInputElement>) => setPage({ ...page, [k]: e.target.value }) }),
-    setLogo: (logo: string) => setPage({ ...page, logo }),
-    linkError: linkBad ? 'Must start with https://, mailto: or tel:' : undefined,
-    resetDesign: () => setPage({ ...PAGE_DEFAULTS, logo: page.logo }),
-    preview: {
-      heading: page.heading.trim() || DEFAULT_HEADING,
-      message: d.message.trim() || DEFAULT_MESSAGE,
-      logo: page.logo,
-      page: { background: page.bg, color: page.fg },
-      button: page.buttonLabel.trim() ? { label: page.buttonLabel.trim(), style: { background: page.accent, color: ink(page.accent) } } : null,
+    design: {
+      canvas, logo, message: l.message,
+      custom: !!savedPage.canvas,
+      open: designing,
+      start: () => setDesigning(true),
+      stop: () => setDesigning(false),
+      save: (next: Canvas) => a.patch({ license: { page: { ...savedPage, canvas: next } } }, 'Maintenance page saved'),
     },
     dirty,
-    canSave: dirty && !linkBad,
-    save: () => a.patch({
-      license: {
-        ...d, paidUntil: d.paidUntil || null, graceDays: Number(d.graceDays),
-        page: { ...page, heading: page.heading.trim(), buttonLabel: page.buttonLabel.trim(), buttonUrl: page.buttonUrl.trim() },
-      },
-    }),
+    canSave: dirty,
+    save: () => a.patch({ license: { ...d, paidUntil: d.paidUntil || null, graceDays: Number(d.graceDays) } }),
     replaceKey: () => a.makeLicense('New key made, update the snippet on their site'),
   }
 }

@@ -32,7 +32,6 @@ export function useClientActions(id: string) {
     patch: (body: object, msg = 'Saved') => run(() => crmApi.update(id, body), msg),
     remove: () => run(() => crmApi.remove(id), 'Deleted'),
     addNote: (text: string) => run(() => crmApi.addNote(id, text), 'Note added'),
-    postUpdate: (text: string) => run(() => crmApi.postUpdate(id, text), 'Update posted'),
     invite: () => run(() => crmApi.invite(id), 'Invite sent'),
     createInvoice: (body: object, msg: string) => run(() => crmApi.createInvoice(id, body), msg),
     markPaid: (invoiceId: string) => run(() => crmApi.markPaid(invoiceId), 'Marked as paid'),

@@ -3,7 +3,8 @@ import express, { Request, Response } from "express";
 import crypto from "node:crypto";
 import mongoose from "mongoose";
 import z from "zod";
-import Client, { STAGES, PHASES } from "../../shared/models/client.model.js";
+import Client, { STAGES } from "../../shared/models/client.model.js";
+import ClientProject from "../../shared/models/clientProject.model.js";
 import Invoice from "../../shared/models/invoice.model.js";
 import Doc from "../../shared/models/doc.model.js";
 import NotFound from "../../shared/errors/NotFound.error.js";
@@ -12,7 +13,10 @@ import Ok from "../../shared/responses/Ok.response.js";
 import Created from "../../shared/responses/Created.response.js";
 import sendMail from "../../shared/utils/sendMail.util.js";
 import { clientMail, licenseState, markPaid, newLicenseKey } from "../../shared/utils/crm.util.js";
-import { esc } from "../public/contact/contact.mail.js";
+import { clientsWithUnread, messageSchema, openProject, postMessage, projectRows, projectSchema } from "../../shared/utils/project.util.js";
+import { aiOn, writeDoc } from "../../shared/utils/ai.util.js";
+import { maintenancePage } from "../public/license/license.page.js";
+import { esc, site } from "../public/contact/contact.mail.js";
 import { parse } from "./admin.controller.js";
 
 // mounted behind the admin middleware
@@ -21,7 +25,31 @@ const router = express.Router();
 const text = (max: number) => z.string().trim().max(max);
 const date = z.union([z.null(), z.coerce.date()]); // null first: coerce turns null into 1970
 const hex = z.string().regex(/^#[0-9a-f]{6}$/i, "Colours must look like #1a2b3c");
+const https = z.string().trim().max(500).regex(/^https:\/\/[^\s"'<>()\\]+$/, "Images must be uploaded");
 const signSchema = z.object({ name: text(120).min(2, "Type your full name"), image: z.string().max(90_000).regex(/^data:image\/png;base64,[\w+/=]+$/, "Draw your signature") });
+
+// the free-form maintenance page: a 1280x720 stage of elements (rendered by license.page.ts)
+const link = z.string().trim().max(300).regex(/^(https:\/\/[^\s"'<>]+|mailto:[^\s"'<>]+|tel:[\d+\s()-]+)$/, "Button links must start with https://, mailto: or tel:");
+const n = (min: number, max: number) => z.coerce.number().min(min).max(max);
+const canvasSchema = z.object({
+    bg: hex, bg2: z.union([z.literal(""), hex]), bg3: z.union([z.literal(""), hex]).default(""), bgType: z.enum(["linear", "radial"]).default("linear"),
+    angle: n(0, 360), img: z.union([z.literal(""), https]), dim: n(0, 0.9),
+    els: z.array(z.object({
+        t: z.enum(["text", "image", "button", "box"]),
+        x: n(-1280, 2560), y: n(-720, 1440), w: n(4, 2560), h: n(4, 1440),
+        text: z.string().max(600).default(""),
+        src: z.union([z.literal(""), https]).default(""),
+        href: z.union([z.literal(""), link]).default(""),
+        size: n(8, 240).default(24), weight: n(100, 900).default(400), italic: z.boolean().default(false),
+        font: z.enum(["sans", "serif", "mono", "round"]).default("sans"),
+        align: z.enum(["left", "center", "right"]).default("left"),
+        color: hex.default("#0d0d12"), fill: z.union([z.literal(""), hex]).default(""),
+        radius: n(0, 720).default(0), opacity: n(0, 1).default(1), spacing: n(-0.2, 1).default(0), lh: n(0.7, 3).default(1.2),
+        fill2: z.union([z.literal(""), hex]).default(""), fangle: n(0, 360).default(135), clip: z.boolean().default(false),
+        bw: n(0, 40).default(0), bc: hex.default("#0d0d12"), shadow: n(0, 1).default(0), rot: n(-180, 180).default(0),
+        upper: z.boolean().default(false), underline: z.boolean().default(false), fit: z.enum(["contain", "cover"]).default("contain"),
+    })).max(60),
+});
 
 const clientSchema = z.object({
     name: text(120).min(1, "Name is required"),
@@ -33,8 +61,6 @@ const clientSchema = z.object({
     stage: z.enum(STAGES),
     value: z.coerce.number().min(0).max(1e9),
     followUpAt: date,
-    phase: z.enum(PHASES),
-    milestones: z.array(z.object({ title: text(120).min(1), done: z.boolean() })).max(30),
     license: z.object({
         domain: text(200).toLowerCase().transform((d) => d.replace(/^https?:\/\//, "").replace(/\/.*$/, "")),
         on: z.boolean(),
@@ -47,7 +73,8 @@ const clientSchema = z.object({
             logo: z.union([z.literal(""), z.string().trim().max(500).regex(/^https:\/\/[^\s"'<>]+$/, "Logo must be an uploaded image")]),
             bg: hex, fg: hex, accent: hex,
             buttonLabel: text(40),
-            buttonUrl: z.union([z.literal(""), z.string().trim().max(300).regex(/^(https:\/\/[^\s"'<>]+|mailto:[^\s"'<>]+|tel:[\d+\s()-]+)$/, "Button link must start with https://, mailto: or tel:")]),
+            buttonUrl: z.union([z.literal(""), link]),
+            canvas: z.union([z.null(), canvasSchema]).optional(),
         }),
     }).partial(),
 }).partial();
@@ -75,15 +102,16 @@ const view = (c: InstanceType<typeof Client>) => {
 router.get("/crm/summary", async (req: Request, res: Response) => {
     const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const [due, open, unpaid, received] = await Promise.all([
+    const [due, open, unpaid, received, unread] = await Promise.all([
         Client.countDocuments({ followUpAt: { $lte: endOfDay }, stage: { $nin: ["lost"] } }),
         Client.aggregate([{ $match: { stage: { $in: ["new", "contacted", "proposal"] } } }, { $group: { _id: null, v: { $sum: "$value" }, n: { $sum: 1 } } }]),
         Invoice.aggregate([{ $match: { status: { $ne: "paid" } } }, { $group: { _id: null, v: { $sum: "$amount" }, n: { $sum: 1 } } }]),
         Invoice.aggregate([{ $match: { status: "paid", paidAt: { $gte: monthStart } } }, { $group: { _id: null, v: { $sum: "$amount" } } }]),
+        clientsWithUnread(),
     ]);
     return Ok(res, "Summary", {
         due, openValue: open[0]?.v ?? 0, openCount: open[0]?.n ?? 0,
-        unpaidValue: unpaid[0]?.v ?? 0, unpaidCount: unpaid[0]?.n ?? 0, receivedThisMonth: received[0]?.v ?? 0,
+        unpaidValue: unpaid[0]?.v ?? 0, unpaidCount: unpaid[0]?.n ?? 0, receivedThisMonth: received[0]?.v ?? 0, inbox: unread.size,
     });
 });
 
@@ -97,9 +125,11 @@ router.get("/clients", async (req: Request, res: Response) => {
         const rx = new RegExp(String(q).slice(0, 60).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
         filter.$or = [{ name: rx }, { email: rx }, { company: rx }];
     }
+    const unread = await clientsWithUnread();
+    if (v === "inbox") filter._id = { $in: [...unread] };
     const clients = await Client.find(filter).sort(v === "due" ? { followUpAt: 1 } : { updatedAt: -1 }).limit(300)
-        .select("name email company stage value followUpAt portal phase source createdAt").lean();
-    return Ok(res, "Clients", clients);
+        .select("name email company stage value followUpAt portal source createdAt").lean();
+    return Ok(res, "Clients", clients.map((c) => ({ ...c, unread: unread.has(String(c._id)) })));
 });
 
 router.post("/clients", async (req: Request, res: Response) => {
@@ -110,11 +140,12 @@ router.post("/clients", async (req: Request, res: Response) => {
 
 router.get("/clients/:id", async (req: Request<{ id: string }>, res: Response) => {
     const client = await find(req.params.id);
-    const [invoices, docs] = await Promise.all([
+    const [invoices, docs, projects] = await Promise.all([
         Invoice.find({ client: client._id }).sort({ createdAt: -1 }).lean(),
         Doc.find({ client: client._id }).sort({ createdAt: -1 }).select("-body -us.image -them.image").lean(),
+        projectRows(client._id, "studio"),
     ]);
-    return Ok(res, "Client", { ...view(client), invoices, docs });
+    return Ok(res, "Client", { ...view(client), invoices, docs, projects, ai: aiOn() });
 });
 
 router.put("/clients/:id", async (req: Request<{ id: string }>, res: Response) => {
@@ -128,7 +159,7 @@ router.put("/clients/:id", async (req: Request<{ id: string }>, res: Response) =
 
 router.delete("/clients/:id", async (req: Request<{ id: string }>, res: Response) => {
     const client = await find(req.params.id);
-    await Promise.all([Invoice.deleteMany({ client: client._id }), Doc.deleteMany({ client: client._id }), client.deleteOne()]);
+    await Promise.all([Invoice.deleteMany({ client: client._id }), Doc.deleteMany({ client: client._id }), ClientProject.deleteMany({ client: client._id }), client.deleteOne()]);
     return Ok(res, "Deleted");
 });
 
@@ -140,14 +171,53 @@ router.post("/clients/:id/notes", async (req: Request<{ id: string }>, res: Resp
     return Created(res, "Note added", view(client));
 });
 
-// a progress update the client sees (and gets emailed)
-router.post("/clients/:id/updates", async (req: Request<{ id: string }>, res: Response) => {
-    const { text: t } = parse(z.object({ text: text(2000).min(1, "Write something") }), req.body);
+// ---------- client projects ----------
+router.post("/clients/:id/projects", async (req: Request<{ id: string }>, res: Response) => {
     const client = await find(req.params.id);
-    client.updates.unshift({ text: t, at: new Date() });
-    await client.save();
-    if (client.portal && client.email) void sendMail(client.email, "New update on your project", clientMail(client.name, "Project update", "Here's what's new.", esc(t).replace(/\n/g, "<br>"), "See your project"));
-    return Created(res, "Update posted", view(client));
+    const data = parse(projectSchema.required({ name: true }), req.body);
+    const p = await ClientProject.create({ ...data, client: client._id });
+    return Created(res, "Project created", { _id: p._id });
+});
+
+router.get("/client-projects/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const p = await byId(ClientProject, req.params.id);
+    return Ok(res, "Project", await openProject(p, "studio"));
+});
+
+router.put("/client-projects/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const p = await byId(ClientProject, req.params.id);
+    p.set(parse(projectSchema, req.body));
+    await p.save();
+    return Ok(res, "Saved", await openProject(p, "studio"));
+});
+
+router.delete("/client-projects/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const p = await byId(ClientProject, req.params.id);
+    await p.deleteOne();
+    return Ok(res, "Deleted");
+});
+
+router.post("/client-projects/:id/messages", async (req: Request<{ id: string }>, res: Response) => {
+    const p = await byId(ClientProject, req.params.id);
+    await postMessage(p, "studio", parse(messageSchema, req.body).text);
+    return Created(res, "Sent", await openProject(p, "studio"));
+});
+
+// a progress update the client sees (and gets emailed)
+router.post("/client-projects/:id/updates", async (req: Request<{ id: string }>, res: Response) => {
+    const p = await byId(ClientProject, req.params.id);
+    const { text: t } = parse(messageSchema, req.body);
+    p.updates.unshift({ text: t, at: new Date() });
+    await p.save();
+    const client = await Client.findById(p.client).select("name email portal").lean();
+    if (client?.portal && client.email) void sendMail(client.email, `New update on ${p.name}`, clientMail(client.name, "Project update", "Here's what's new.", esc(t).replace(/\n/g, "<br>"), "See your project", `${site}/portal/projects/${p._id}`));
+    return Created(res, "Update posted", await openProject(p, "studio"));
+});
+
+// the maintenance page exactly as visitors will see it, for the designer's phone / desktop preview
+router.post("/maintenance/preview", async (req: Request, res: Response) => {
+    const { canvas, message } = parse(z.object({ canvas: canvasSchema, message: text(300).default("") }), req.body);
+    return Ok(res, "Preview", { html: maintenancePage({ m: message, p: { c: canvas } }) });
 });
 
 // gives the client portal access and emails them how to log in
@@ -203,6 +273,27 @@ router.delete("/invoices/:id", async (req: Request<{ id: string }>, res: Respons
 
 // ---------- documents ----------
 const docSchema = z.object({ kind: text(40).default(""), title: text(200).min(1, "Give it a title"), body: z.string().max(60_000) });
+
+// AI writer: streams plain text while Mistral writes (or revises) a document for this client
+router.post("/docs/write", async (req: Request, res: Response) => {
+    const i = parse(z.object({
+        client: z.string(), project: z.string().default(""),
+        kind: text(80).default(""), instructions: text(2000).default(""), draft: z.string().max(60_000).default(""),
+    }), req.body);
+    if (!aiOn()) throw new BadRequest("The AI writer is off. Add MISTRAL_API_KEY to server/.env and restart the server.");
+    const client = await find(i.client);
+    const project = mongoose.isValidObjectId(i.project) ? await ClientProject.findOne({ _id: i.project, client: client._id }).lean() : null;
+    const stream = await writeDoc({
+        kind: i.kind, instructions: i.instructions, draft: i.draft,
+        client: [client.name, client.company && `of ${client.company}`, client.email && `(${client.email})`].filter(Boolean).join(" "),
+        project: project ? [project.name, project.brief, project.services.length && `Services: ${project.services.join(", ")}`, project.budget && `Budget: ${project.budget}`, project.deadline && `Wanted by ${project.deadline.toDateString()}`].filter(Boolean).join("\n") : "",
+    });
+    // no-transform: compression would otherwise hold the chunks back
+    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" });
+    try { for await (const chunk of stream) res.write(chunk); }
+    catch (err) { res.write(`\n\n[[AI error: ${(err as Error).message}]]`); }
+    res.end();
+});
 
 router.post("/clients/:id/docs", async (req: Request<{ id: string }>, res: Response) => {
     const client = await find(req.params.id);

@@ -29,7 +29,7 @@ export function licenseState(l: License | null | undefined, now = Date.now()) {
 }
 
 // signed "payload.signature"; a running site trusts it for up to 7 days without calling us
-type Page = { heading?: string | null; logo?: string | null; bg?: string | null; fg?: string | null; accent?: string | null; buttonLabel?: string | null; buttonUrl?: string | null };
+type Page = { heading?: string | null; logo?: string | null; bg?: string | null; fg?: string | null; accent?: string | null; buttonLabel?: string | null; buttonUrl?: string | null; canvas?: unknown };
 
 export function lease(l: License & { domain?: string | null; message?: string | null; page?: Page | null }, now = Date.now()) {
     const state = licenseState(l, now);
@@ -37,7 +37,8 @@ export function lease(l: License & { domain?: string | null; message?: string | 
     const graceEnd = l.paidUntil ? l.paidUntil.getTime() + (l.graceDays ?? 7) * DAY : Infinity;
     const g = l.page ?? {};
     // the maintenance page design rides along only while the site is down, so "on" leases stay tiny
-    const p = on ? undefined : { h: g.heading || "", l: g.logo || "", bg: g.bg || "", fg: g.fg || "", ac: g.accent || "", bl: g.buttonLabel || "", bu: g.buttonUrl || "" };
+    // c = the canvas design; the old single fields stay for pages designed before it
+    const p = on ? undefined : g.canvas ? { c: g.canvas } : { h: g.heading || "", l: g.logo || "", bg: g.bg || "", fg: g.fg || "", ac: g.accent || "", bl: g.buttonLabel || "", bu: g.buttonUrl || "" };
     const payload = { k: l.key, d: l.domain || "", s: on ? "on" : "off", m: on ? "" : l.message || "", p, iat: now, exp: Math.min(now + 7 * DAY, on ? graceEnd : Infinity) };
     const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
     return `${body}.${crypto.sign(null, Buffer.from(body), privateKey).toString("base64url")}`;

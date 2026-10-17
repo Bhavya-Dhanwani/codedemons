@@ -9,12 +9,14 @@ import logger from "../../shared/config/logger.config.js";
 import Client from "../../shared/models/client.model.js";
 import Invoice from "../../shared/models/invoice.model.js";
 import Doc from "../../shared/models/doc.model.js";
+import ClientProject from "../../shared/models/clientProject.model.js";
 import NotFound from "../../shared/errors/NotFound.error.js";
 import BadRequest from "../../shared/errors/BadRequest.error.js";
 import Unauthorized from "../../shared/errors/Unauthorized.error.js";
 import Ok from "../../shared/responses/Ok.response.js";
 import sendMail from "../../shared/utils/sendMail.util.js";
 import { clientMail, licenseState, paymentLink, razorpayOn, syncInvoice, upiLink } from "../../shared/utils/crm.util.js";
+import { messageSchema, openProject, postMessage, projectRows, projectSchema } from "../../shared/utils/project.util.js";
 import { parse } from "../admin/admin.controller.js";
 import { esc, site } from "../public/contact/contact.mail.js";
 import { signSchema } from "../admin/crm.router.js";
@@ -142,16 +144,50 @@ router.get("/me", async (req: Request, res: Response) => {
     const id = (req as Authed).clientId;
     const client = await Client.findOne({ _id: id, portal: true }).lean();
     if (!client) throw new Unauthorized("Your portal access was removed.");
-    const [invoices, docs] = await Promise.all([
+    const [invoices, docs, projects] = await Promise.all([
         Invoice.find({ client: id }).sort({ createdAt: -1 }),
         Doc.find({ client: id, status: { $ne: "draft" } }).sort({ createdAt: -1 }).select("title kind status sentAt them.at").lean(),
+        projectRows(id, "client"),
     ]);
     await Promise.all(invoices.filter((i) => i.status !== "paid").map(syncInvoice));
     return Ok(res, "Portal", {
-        name: client.name, company: client.company, phase: client.phase, milestones: client.milestones, updates: client.updates.slice(0, 20),
+        name: client.name, company: client.company, projects,
         license: client.license?.key ? { state: licenseState(client.license), domain: client.license.domain, paidUntil: client.license.paidUntil } : null,
         invoices: invoices.map(invoiceView), docs,
     });
+});
+
+/*
+    @route POST /api/portal/projects
+    @desc The client starts a project: what they need, budget, when. We get an email; it shows up in the CRM.
+    @access Client
+*/
+const newProjectSchema = projectSchema.pick({ name: true, brief: true, services: true, budget: true, deadline: true }).required({ name: true, brief: true })
+    .refine((p) => p.brief.length >= 10, { message: "Tell us a little more about what you need", path: ["brief"] });
+router.post("/projects", async (req: Request, res: Response) => {
+    const id = (req as Authed).clientId;
+    const data = parse(newProjectSchema, req.body);
+    const client = await Client.findById(id);
+    if (!client) throw new Unauthorized("Please log in again.");
+    if (await ClientProject.countDocuments({ client: id }) >= 20) throw new BadRequest("That's a lot of projects. Message us on an existing one instead.");
+    const p = await ClientProject.create({ ...data, client: id });
+    // a new request is something to act on today
+    client.set({ followUpAt: new Date(), ...(client.stage === "lost" ? { stage: "new" } : {}) });
+    await client.save();
+    void sendMail(env.CONTACT_EMAIL, `New project from ${client.name}: ${p.name}`, clientMail("team", "New project", `${esc(client.name)} started a project.`,
+        `<b>${esc(p.name)}</b>${p.budget ? ` (budget ${esc(p.budget)})` : ""}<br><br>${esc(p.brief).replace(/\n/g, "<br>")}`, "Open admin", `${site}/admin`));
+    return Ok(res, "Project created", { _id: p._id });
+});
+
+router.get("/projects/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const p = await mine(ClientProject, req);
+    return Ok(res, "Project", await openProject(p, "client"));
+});
+
+router.post("/projects/:id/messages", async (req: Request<{ id: string }>, res: Response) => {
+    const p = await mine(ClientProject, req);
+    await postMessage(p, "client", parse(messageSchema, req.body).text);
+    return Ok(res, "Sent", await openProject(p, "client"));
 });
 
 router.get("/docs/:id", async (req: Request<{ id: string }>, res: Response) => {

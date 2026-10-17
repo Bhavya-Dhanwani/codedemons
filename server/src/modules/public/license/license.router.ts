@@ -7,6 +7,7 @@ import { lease, publicKey } from "../../../shared/utils/crm.util.js";
 import { cachedLicense, readStarted, rememberLicense } from "../../../shared/utils/licenseCache.util.js";
 import { site } from "../contact/contact.mail.js";
 import { GUARD, GUARD_TYPES } from "./license.guard.js";
+import { PAGE_JS } from "./license.page.js";
 
 // making the router
 const router = express.Router();
@@ -94,29 +95,17 @@ const SDK = `(function () {
       }).catch(function () { return null; });
   }
   var blocked = false;
-  // The maintenance page designed in the CRM (license.page). Built with DOM calls and textContent only:
-  // nothing from the lease is ever parsed as HTML. Keep in step with MaintenancePreview.tsx in the client.
-  var HEX = /^#[0-9a-f]{6}$/i, LINK = /^(https:|mailto:|tel:)/;
-  var color = function (v, f) { return HEX.test(v || "") ? v : f; };
-  var ink = function (h) { var n = parseInt(h.slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 < 150 ? "#fff" : "#0d0d12"; };
-  var el = function (tag, css, text) { var e = document.createElement(tag); e.style.cssText = css; if (text) e.textContent = text; return e; };
+  // The maintenance page designed in the CRM (license.page.ts, shared with the server guard). Every lease value is
+  // checked or escaped before it becomes markup; it lives in a closed shadow root so the site's CSS can't touch it.
+${PAGE_JS}
   function block(d) {
     blocked = true;
-    var p = (d && d.p) || {}, bg = color(p.bg, "#f2f1ed"), fg = color(p.fg, "#0d0d12"), ac = color(p.ac, "#2b3bff");
     var show = function () {
       document.documentElement.style.visibility = "visible";
-      var page = el("div", "position:fixed;inset:0;display:grid;place-items:center;background:" + bg + ";color:" + fg + ";font:16px/1.5 system-ui,sans-serif;padding:24px;text-align:center;z-index:2147483647");
-      var box = el("div", "max-width:440px;display:grid;justify-items:center;gap:14px;overflow-wrap:anywhere");
-      if (p.l) { var img = el("img", "max-height:64px;max-width:200px;object-fit:contain;margin-bottom:8px"); img.alt = ""; img.src = new URL(p.l, new URL(s.src).origin).href; box.appendChild(img); }
-      box.appendChild(el("h1", "font-size:32px;font-weight:500;letter-spacing:-.03em;line-height:1.1;margin:0", p.h || "Temporarily unavailable"));
-      box.appendChild(el("p", "margin:0;opacity:.7", (d && d.m) || "This website is under maintenance. Please check back soon."));
-      if (p.bl && LINK.test(p.bu || "")) {
-        var a = el("a", "margin-top:8px;padding:12px 22px;border-radius:99px;background:" + ac + ";color:" + ink(ac) + ";text-decoration:none;font-weight:500", p.bl);
-        a.href = p.bu; a.rel = "noopener";
-        box.appendChild(a);
-      }
-      page.appendChild(box);
-      document.body.replaceChildren(page);
+      var x = parts(d), host = document.createElement("div");
+      host.attachShadow({ mode: "closed" }).innerHTML = "<style>" + x.css + "</style>" + x.body;
+      document.title = x.title;
+      document.body.replaceChildren(host);
     };
     document.body ? show() : addEventListener("DOMContentLoaded", show);
   }

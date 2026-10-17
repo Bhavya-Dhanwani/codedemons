@@ -4,7 +4,8 @@ import { Field } from '../../../../shared/components/Field'
 import type { ClientActions } from '../../hooks/useClientActions'
 import { useLicenseTab } from '../../hooks/useLicenseTab'
 import type { Client } from '../../types'
-import { MaintenanceDesigner } from '../license/MaintenanceDesigner'
+import { CanvasDesigner } from '../license/CanvasDesigner'
+import { CanvasView } from '../license/CanvasView'
 
 export function LicenseTab({ c, a }: { c: Client; a: ClientActions }) {
   const l = useLicenseTab(c, a)
@@ -34,19 +35,23 @@ export function LicenseTab({ c, a }: { c: Client; a: ClientActions }) {
         <div className="snippet"><code className="pre">{l.serverSnippet}</code><Button onClick={() => l.copy(l.serverSnippet)}>Copy</Button></div>
       </Field>
 
-      <details className="crm-more">
-        <summary>Maintenance page visitors see while it's down</summary>
-        <MaintenanceDesigner l={l} />
-      </details>
+      <Field label="Maintenance page visitors see while it's down" as="div">
+        <button type="button" className="mp-card" onClick={l.design.start}>
+          <CanvasView c={l.design.canvas} />
+          <span className="mp-card-foot"><b>{l.design.custom ? 'Custom design' : 'Default page'}</b><span className="ad-btn primary">Open designer</span></span>
+        </button>
+      </Field>
+      {l.design.open && <CanvasDesigner initial={l.design.canvas} message={l.design.message} logo={l.design.logo} onSave={l.design.save} onClose={l.design.stop} />}
 
       <details className="crm-more">
-        <summary>Domain and payment</summary>
+        <summary>Domain, payment and message</summary>
         <div className="ad-fields flat">
           <Field label="Domain" hint="Only works on this domain and its subdomains. Empty = any domain."><input placeholder="clientsite.com" {...l.field('domain')} /></Field>
           <div className="two">
             <Field label="Paid until" hint="Empty = never expires"><input type="date" {...l.field('paidUntil')} /></Field>
             <Field label="Grace days" hint="Stays live this long after"><input type="number" min={0} max={90} {...l.field('graceDays')} /></Field>
           </div>
+          <Field label="Message for apps and API calls" hint="Sent as the 503 error while the site is down (the page itself is designed above)"><input maxLength={300} placeholder="This website is under maintenance. Please check back soon." {...l.field('message')} /></Field>
           <div className="ad-row">
             <Button variant="primary" disabled={!l.canSave} onClick={l.save}>Save</Button>
             <ConfirmButton onConfirm={l.replaceKey} confirm="Old key stops working. Sure?">Replace key</ConfirmButton>

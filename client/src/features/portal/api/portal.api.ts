@@ -1,9 +1,12 @@
 import { api } from '../../../shared/api/api'
 import type { DocFull, Signature } from '../../../shared/types/content'
-import type { Me, PortalInvoice } from '../types'
+import type { Me, PortalInvoice, ProjectFull } from '../types'
 
 export const portalApi = {
   me: () => api.get<Me>('/portal/me'),
+  createProject: (body: object) => api.post<{ _id: string }>('/portal/projects', body),
+  project: (id: string) => api.get<ProjectFull>(`/portal/projects/${id}`),
+  sendMessage: (id: string, text: string) => api.post<ProjectFull>(`/portal/projects/${id}/messages`, { text }),
   doc: (id: string) => api.get<DocFull>(`/portal/docs/${id}`),
   signDoc: (id: string, sig: Signature) => api.post(`/portal/docs/${id}/sign`, sig),
   invoice: (id: string) => api.get<PortalInvoice>(`/portal/invoices/${id}`),

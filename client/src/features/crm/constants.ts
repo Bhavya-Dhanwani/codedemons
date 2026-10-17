@@ -3,9 +3,9 @@ import type { LicenseState } from './types'
 export const STAGES = ['new', 'contacted', 'proposal', 'won', 'lost'] as const
 
 /** List filters: [server view, chip label] */
-export const VIEWS = [['due', 'Follow up'], ['new', 'New'], ['contacted', 'Contacted'], ['proposal', 'Proposal'], ['won', 'Clients'], ['lost', 'Lost'], ['all', 'All']] as const
+export const VIEWS = [['due', 'Follow up'], ['inbox', 'Messages'], ['new', 'New'], ['contacted', 'Contacted'], ['proposal', 'Proposal'], ['won', 'Clients'], ['lost', 'Lost'], ['all', 'All']] as const
 
-export const CLIENT_TABS = ['Overview', 'Project', 'Documents', 'Payments', 'License'] as const
+export const CLIENT_TABS = ['Overview', 'Projects', 'Documents', 'Payments', 'License'] as const
 export type ClientTab = (typeof CLIENT_TABS)[number]
 
 /** License status: [text, tone class] */

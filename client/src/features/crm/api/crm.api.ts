@@ -1,8 +1,10 @@
 import { api } from '../../../shared/api/api'
 import type { DocFull, Signature } from '../../../shared/types/content'
+import type { ProjectFull } from '../../portal/types'
 import type { Client, Row, Summary } from '../types'
 
 const C = '/admin/clients'
+const P = '/admin/client-projects'
 type Created = { _id: string }
 
 // Calls that change a client answer either the updated client or nothing; useClientActions handles both.
@@ -15,8 +17,16 @@ export const crmApi = {
   remove: (id: string) => api.del<unknown>(`${C}/${id}`),
 
   addNote: (id: string, text: string) => api.post<unknown>(`${C}/${id}/notes`, { text }),
-  postUpdate: (id: string, text: string) => api.post<unknown>(`${C}/${id}/updates`, { text }),
   invite: (id: string) => api.post<unknown>(`${C}/${id}/invite`),
+
+  createProject: (id: string, body: object) => api.post<Created>(`${C}/${id}/projects`, body),
+  project: (pid: string) => api.get<ProjectFull>(`${P}/${pid}`),
+  saveProject: (pid: string, body: object) => api.put<ProjectFull>(`${P}/${pid}`, body),
+  deleteProject: (pid: string) => api.del(`${P}/${pid}`),
+  sendMessage: (pid: string, text: string) => api.post<ProjectFull>(`${P}/${pid}/messages`, { text }),
+  postUpdate: (pid: string, text: string) => api.post<ProjectFull>(`${P}/${pid}/updates`, { text }),
+  /** the maintenance page as visitors get it (HTML), for the designer's previews */
+  maintenancePreview: (body: { canvas: object; message: string }) => api.post<{ html: string }>('/admin/maintenance/preview', body),
 
   createInvoice: (id: string, body: object) => api.post<unknown>(`${C}/${id}/invoices`, body),
   markPaid: (invoiceId: string) => api.post<unknown>(`/admin/invoices/${invoiceId}/paid`),

@@ -4,6 +4,7 @@
 // Web-standard APIs only (crypto.subtle, fetch, atob, Response), so one file runs on Node 18+ and on edge
 // runtimes (Next.js middleware, Vercel Edge, Cloudflare Workers, Bun, Deno).
 // Kept as a plain string (no template literals inside) so __API__ / __PUB__ can be filled in per request.
+import { PAGE_JS } from "./license.page.js";
 
 // Types for TypeScript projects, served at /api/license/guard.d.mts (download next to license-guard.mjs).
 export const GUARD_TYPES = `import type { IncomingMessage, ServerResponse } from "node:http";
@@ -43,14 +44,7 @@ export const GUARD = `// codedemons license guard (ESM). Node 18+ and edge runti
 
 var API = "__API__";
 var PUB = "__PUB__";
-var HEX = /^#[0-9a-f]{6}$/i, LINK = /^(https:|mailto:|tel:)/, IMG = /^https:\\/\\/[^\\s"'<>]+$/;
-var DEFAULT_MESSAGE = "This website is under maintenance. Please check back soon.";
-
 function b64(t) { t = t.replace(/-/g, "+").replace(/_/g, "/"); return Uint8Array.from(atob(t + "===".slice((t.length + 3) % 4)), function (c) { return c.charCodeAt(0); }); }
-function esc(v) { return String(v).replace(/[&<>"']/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); }
-function color(v, f) { return HEX.test(v || "") ? v : f; }
-function ink(h) { var n = parseInt(h.slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 < 150 ? "#fff" : "#0d0d12"; }
-
 var pubKey = null;
 function key() {
   if (!pubKey) pubKey = crypto.subtle.importKey("raw", b64(PUB), { name: "Ed25519" }, false, ["verify"]).catch(function (e) {
@@ -61,20 +55,8 @@ function key() {
   return pubKey;
 }
 
-// the maintenance page designed in the CRM; every value escaped or checked (same look as sdk.js)
-function page(lease) {
-  var p = lease.p || {}, bg = color(p.bg, "#f2f1ed"), fg = color(p.fg, "#0d0d12"), ac = color(p.ac, "#2b3bff");
-  return "<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=\\"width=device-width,initial-scale=1\\"><meta name=robots content=noindex>" +
-    "<title>" + esc(p.h || "Temporarily unavailable") + "</title></head>" +
-    "<body style=\\"margin:0;min-height:100vh;display:grid;place-items:center;background:" + bg + ";color:" + fg + ";font:16px/1.5 system-ui,sans-serif;padding:24px;box-sizing:border-box;text-align:center\\">" +
-    "<div style=\\"max-width:440px;display:grid;justify-items:center;gap:14px;overflow-wrap:anywhere\\">" +
-    (IMG.test(p.l || "") ? "<img src=\\"" + esc(p.l) + "\\" alt=\\"\\" style=\\"max-height:64px;max-width:200px;object-fit:contain;margin-bottom:8px\\">" : "") +
-    "<h1 style=\\"font-size:32px;font-weight:500;letter-spacing:-.03em;line-height:1.1;margin:0\\">" + esc(p.h || "Temporarily unavailable") + "</h1>" +
-    "<p style=\\"margin:0;opacity:.7\\">" + esc(lease.m || DEFAULT_MESSAGE) + "</p>" +
-    (p.bl && LINK.test(p.bu || "") ? "<a href=\\"" + esc(p.bu) + "\\" rel=noopener style=\\"margin-top:8px;padding:12px 22px;border-radius:99px;background:" + ac + ";color:" + ink(ac) + ";text-decoration:none;font-weight:500\\">" + esc(p.bl) + "</a>" : "") +
-    "</div></body></html>";
-}
-
+// the maintenance page designed in the CRM (shared with sdk.js, see license.page.ts)
+${PAGE_JS}
 /**
  * @param {{ key: string, api?: string, refreshMs?: number }} options
  *   key: the LIC-... license key.  api: lease endpoint base (default: codedemons).
