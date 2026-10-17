@@ -9,7 +9,10 @@ export function usePortalLogin() {
   const form = useForm({ email: '' }, { rules: { email } })
   const request = useMutation({ mutationFn: authApi.requestCode })
   return {
-    field: form.field,
+    field: (k: 'email') => {
+      const f = form.field(k)
+      return { ...f, onChange: (e: Parameters<typeof f.onChange>[0]) => { f.onChange(e); if (request.isError) request.reset() } }
+    },
     errors: form.errors,
     email: form.values.email.trim(),
     submit: (e: FormEvent) => { e.preventDefault(); if (form.validate()) request.mutate(form.trimmed().email) },

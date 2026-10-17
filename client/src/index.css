@@ -888,3 +888,4 @@ body.de-open { overflow: hidden; }
 .cv-custom[open] { display: grid; gap: 8px; padding: 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
 .cv-custom summary { cursor: pointer; font-size: 13px; color: var(--blue); font-weight: 500; }
 .cv-custom > .ad-btn { justify-self: start; }
+.ad-login .ad-back:disabled { cursor: default; opacity: .6; }

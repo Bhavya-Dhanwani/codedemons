@@ -8,8 +8,8 @@ type Options<K extends string> = {
 }
 
 /**
- * Controlled form with per-field errors. An error shows when you leave a filled field or submit,
- * then updates live as you fix it. `validate()` checks everything and focuses the first bad field.
+ * Controlled form with per-field errors. Fields are only checked when the form is submitted;
+ * editing a field clears its error. `validate()` checks everything and focuses the first bad field.
  */
 export function useForm<K extends string>(initial: Record<K, string>, { rules, format = {} }: Options<K>) {
   const [values, setValues] = useState(initial)
@@ -22,10 +22,8 @@ export function useForm<K extends string>(initial: Record<K, string>, { rules, f
     onChange: (e: ChangeEvent<HTMLInputElement>) => {
       const v = format[k]?.(e.target.value) ?? e.target.value
       setValues((s) => ({ ...s, [k]: v }))
-      if (errors[k]) setErrors((s) => ({ ...s, [k]: check(k, v) }))
+      if (errors[k]) setErrors((s) => ({ ...s, [k]: undefined }))
     },
-    // don't nag about an empty field just because it was tabbed through
-    onBlur: () => { if (values[k].trim()) setErrors((s) => ({ ...s, [k]: check(k, values[k]) })) },
     'aria-invalid': errors[k] ? true : undefined,
   })
 
