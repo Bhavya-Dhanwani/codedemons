@@ -14,7 +14,8 @@ import NotFound from "../../shared/errors/NotFound.error.js";
 import BadRequest from "../../shared/errors/BadRequest.error.js";
 import Unauthorized from "../../shared/errors/Unauthorized.error.js";
 import Ok from "../../shared/responses/Ok.response.js";
-import sendMail from "../../shared/utils/sendMail.util.js";
+import sendMail, { mailOn } from "../../shared/utils/sendMail.util.js";
+import ApiError from "../../shared/utils/ApiError.util.js";
 import { clientMail, licenseState, paymentLink, razorpayOn, syncInvoice, upiLink } from "../../shared/utils/crm.util.js";
 import { messageSchema, openProject, postMessage, projectRows, projectSchema } from "../../shared/utils/project.util.js";
 import { parse } from "../admin/admin.controller.js";
@@ -37,10 +38,12 @@ const limit = (ip = "unknown") => {
 };
 
 const sendCode = async (client: InstanceType<typeof Client>) => {
+    // a code nobody can receive would only look like "it never arrived"
+    if (!mailOn && env.NODE_ENV === "production") throw new ApiError(503, "Login emails aren't set up yet. Please contact us at " + env.CONTACT_EMAIL);
     const code = String(crypto.randomInt(100000, 1000000));
     client.login = { code: hash(code), exp: new Date(Date.now() + 10 * 60 * 1000), tries: 0 };
     await client.save();
-    if (!env.SEND_MAIL) logger.info(`[Portal] login code for ${client.email}: ${code}`);
+    if (!mailOn) logger.info(`[Portal] login code for ${client.email}: ${code}`);
     await sendMail(client.email, `${code} is your codedemons login code`, clientMail(client.name, "Login code", "Here's your code.",
         `<span style="font:600 34px/1 monospace;letter-spacing:.3em;">${code}</span><br><br>It works for 10 minutes. If you didn't ask for it, ignore this email.`, "Open the portal"));
 };
