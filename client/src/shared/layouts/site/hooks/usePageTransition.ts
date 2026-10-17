@@ -8,7 +8,7 @@ const PANELS = /^\/(admin|portal|login|signup)/
 
 /**
  * Internal <a href> links and go() play a curtain transition, then hand the URL to the router.
- * Links into the admin / portal skip the curtain.
+ * Links into the admin / portal are a full page load: nothing from the site (Lenis, ScrollTrigger, WebGL) carries over.
  */
 export function usePageTransition(curtain: RefObject<HTMLDivElement | null>, lenis: RefObject<Lenis | null>) {
   const navigate = useNavigate()
@@ -35,7 +35,7 @@ export function usePageTransition(curtain: RefObject<HTMLDivElement | null>, len
       const href = (e.target as HTMLElement).closest('a')?.getAttribute('href')
       if (!href || !(href.startsWith('/') || href.startsWith('#'))) return
       e.preventDefault()
-      if (PANELS.test(href)) navigate(href)
+      if (PANELS.test(href)) location.assign(href)
       else transition(href.startsWith('#') ? location.pathname + href : href)
     }
     const goEv = (e: Event) => transition((e as CustomEvent<string>).detail)

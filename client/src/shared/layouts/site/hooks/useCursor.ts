@@ -19,7 +19,7 @@ export function useCursor() {
       const t = e.target as HTMLElement
       const l = t.closest<HTMLElement>('[data-cursor]')?.dataset.cursor ?? ''
       setLabel(l)
-      ref.current!.className = 'cursor' + (l === 'hidden' ? ' gone' : l ? ' label' : t.closest('a,button') ? ' big' : '')
+      if (ref.current) ref.current.className = 'cursor' + (l === 'hidden' ? ' gone' : l ? ' label' : t.closest('a,button') ? ' big' : '')
     }
     addEventListener('pointermove', move)
     return () => removeEventListener('pointermove', move)
