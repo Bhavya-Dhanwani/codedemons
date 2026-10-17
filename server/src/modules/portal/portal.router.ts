@@ -47,15 +47,17 @@ const sendCode = async (client: InstanceType<typeof Client>) => {
 
 /*
     @route POST /api/portal/code
-    @desc Email a 6 digit login code (same answer whether or not the email exists)
+    @desc Email a 6 digit login code. Unknown emails are told to sign up and get no code.
+          (Tells people whether an email has an account; the per-IP limit keeps that from being scraped.)
     @access Public (rate limited)
 */
 router.post("/code", async (req: Request, res: Response) => {
     const { email: e } = parse(z.object({ email }), req.body);
     limit(req.ip);
     const client = await Client.findOne({ email: e, portal: true });
-    if (client) await sendCode(client);
-    return Ok(res, "If this email has a portal, a code is on its way", null);
+    if (!client) throw new NotFound("No account with this email. Sign up first.");
+    await sendCode(client);
+    return Ok(res, "A code is on its way", null);
 });
 
 // same rules as the signup form (client/src/shared/lib/validators.ts); the server is the one that counts

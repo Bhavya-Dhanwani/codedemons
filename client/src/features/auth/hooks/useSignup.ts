@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from '../../../shared/hooks/useForm'
 import { email, name, optionalPhone, optionalText } from '../../../shared/lib/validators'
@@ -6,8 +7,10 @@ import { authApi } from '../api/auth.api'
 
 /** Client signup, step one: create the account, which emails a code. */
 export function useSignup() {
+  // from the login page's "Sign up with this email"
+  const [params] = useSearchParams()
   const form = useForm(
-    { name: '', email: '', company: '', phone: '', website: '' },
+    { name: '', email: (params.get('email') ?? '').slice(0, 200), company: '', phone: '', website: '' },
     { rules: { name, email, company: optionalText(120, 'Company'), phone: optionalPhone } },
   )
   const signup = useMutation({ mutationFn: authApi.signup })

@@ -17,5 +17,7 @@ export function usePortalLogin() {
     back: () => request.reset(),
     busy: request.isPending,
     error: request.error?.message,
+    /** no account with this email: offer signup instead of a code */
+    notFound: !!request.error?.message.startsWith('No account'),
   }
 }
