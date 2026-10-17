@@ -3,11 +3,11 @@ import type { ReactNode } from 'react'
 /** Red error line; renders nothing when there's no error. Click to dismiss when `onDismiss` is given. */
 export function ErrorText({ children, onDismiss, className }: { children?: ReactNode; onDismiss?: () => void; className?: string }) {
   if (!children) return null
-  return <p className={['ad-err', className].filter(Boolean).join(' ')} onClick={onDismiss}>{children}</p>
+  return <p className={['cp-err', className].filter(Boolean).join(' ')} onClick={onDismiss}>{children}</p>
 }
 
 export function EmptyState({ children }: { children: ReactNode }) {
-  return <div className="ad-empty">{children}</div>
+  return <div className="cp-empty">{children}</div>
 }
 
 export function Muted({ children }: { children: ReactNode }) {
@@ -20,5 +20,5 @@ export function Loading({ children = 'Loading' }: { children?: ReactNode }) {
 
 /** Full screen centred box: login forms, loading screens. */
 export function CenterScreen({ children }: { children: ReactNode }) {
-  return <main className="ad-login">{children}</main>
+  return <main className="cp-login">{children}</main>
 }

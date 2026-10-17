@@ -8,14 +8,14 @@ type Props = { title: string; sub?: ReactNode; onClose: () => void; children: Re
 export function Drawer({ title, sub, onClose, children, foot, wide }: Props) {
   useEscape(onClose)
   return (
-    <div className="ad-drawer-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={'ad-drawer' + (wide ? ' wide' : '')} role="dialog" aria-label={title}>
-        <header className="ad-drawer-head">
+    <div className="cp-drawer-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className={'cp-drawer' + (wide ? ' wide' : '')} role="dialog" aria-label={title}>
+        <header className="cp-drawer-head">
           <div><h2>{title}</h2>{sub}</div>
           <Button variant="ghost" onClick={onClose}>Close</Button>
         </header>
         {children}
-        {foot && <footer className="ad-drawer-foot">{foot}</footer>}
+        {foot && <footer className="cp-drawer-foot">{foot}</footer>}
       </div>
     </div>
   )

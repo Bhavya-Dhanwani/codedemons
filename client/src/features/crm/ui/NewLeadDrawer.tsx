@@ -8,7 +8,7 @@ export function NewLeadDrawer({ onClose, onSaved }: { onClose: () => void; onSav
   const f = useNewLead(onSaved)
   return (
     <Drawer title="New lead" onClose={onClose} wide>
-      <form className="ad-fields" onSubmit={f.submit}>
+      <form className="cp-fields" onSubmit={f.submit}>
         <Field label="Name"><input {...f.field('name')} required autoFocus /></Field>
         <Field label="Email"><input type="email" {...f.field('email')} /></Field>
         <Field label="Phone"><input type="tel" {...f.field('phone')} /></Field>

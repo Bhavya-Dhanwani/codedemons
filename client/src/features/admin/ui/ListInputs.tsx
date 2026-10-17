@@ -9,9 +9,9 @@ const MAX_RESULTS = 6
 export function ResultsInput({ value, onChange }: { value: Result[]; onChange: (v: Result[]) => void }) {
   const list = useArrayField(value, onChange)
   return (
-    <div className="ad-results">
+    <div className="cp-results">
       {list.items.map((r, k) => (
-        <div className="ad-row" key={k}>
+        <div className="cp-row" key={k}>
           <input placeholder="+184%" value={r.v} onChange={(e) => list.update(k, { ...r, v: e.target.value })} />
           <input placeholder="Conversion rate" value={r.l} onChange={(e) => list.update(k, { ...r, l: e.target.value })} />
           <Button variant="ghost" onClick={() => list.remove(k)} aria-label="Remove result">x</Button>
@@ -26,7 +26,7 @@ export function ResultsInput({ value, onChange }: { value: Result[]; onChange: (
 export function GalleryInput({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   const list = useArrayField(value, onChange)
   return (
-    <div className="ad-gallery">
+    <div className="cp-gallery">
       {list.items.map((u, k) => (
         <MediaInput key={u + k} value={u} accept={IMG} onChange={(nu) => (nu ? list.update(k, nu) : list.remove(k))} />
       ))}

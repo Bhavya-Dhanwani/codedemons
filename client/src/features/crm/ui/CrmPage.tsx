@@ -12,7 +12,7 @@ import { ClientDrawer } from './ClientDrawer'
 export default function CrmPage() {
   const crm = useCrmList()
   return (
-    <section className="ad-panel">
+    <section className="cp-panel">
       <PanelHead title="Clients" sub="Leads, deals and the people you work with" action={<Button variant="primary" onClick={crm.startAdding}>New lead</Button>} />
       <CrmTiles tiles={crm.tiles} onPick={crm.setView} />
       <CrmToolbar view={crm.view} q={crm.q} onView={crm.setView} onQuery={crm.setQuery} />

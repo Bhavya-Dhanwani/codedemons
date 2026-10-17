@@ -23,10 +23,10 @@ function PortalCallout({ c, first, onInvite }: { c: Client; first: string; onInv
 function ProjectDetail({ id, onBack, first }: { id: string; onBack: () => void; first: string }) {
   const d = useProjectDetail(id, onBack)
   const { p } = d
-  if (!p) return <p className="ad-err">{d.error}</p>
+  if (!p) return <p className="cp-err">{d.error}</p>
   return (
     <>
-      <div className="ad-row spread">
+      <div className="cp-row spread">
         <Button variant="ghost" onClick={onBack}>All projects</Button>
         <b className="crm-pj-name">{p.name}</b>
       </div>
@@ -49,7 +49,7 @@ function ProjectDetail({ id, onBack, first }: { id: string; onBack: () => void; 
             </li>
           ))}
         </ul>
-        <form className="ad-row" onSubmit={d.addMilestone}>
+        <form className="cp-row" onSubmit={d.addMilestone}>
           <input placeholder={d.milestonePlaceholder} value={d.milestone} onChange={(e) => d.setMilestone(e.target.value)} />
           <Button type="submit" disabled={!d.milestone.trim()}>Add</Button>
         </form>
@@ -62,10 +62,10 @@ function ProjectDetail({ id, onBack, first }: { id: string; onBack: () => void; 
 
       <details className="crm-more" open={!p.messages.length && !!p.brief}>
         <summary>Brief and name</summary>
-        <div className="ad-fields flat">
+        <div className="cp-fields flat">
           <Field label="Name"><input value={d.edit.name} onChange={(e) => d.setEdit('name', e.target.value)} /></Field>
           <Field label="Brief"><textarea rows={6} value={d.edit.brief} onChange={(e) => d.setEdit('brief', e.target.value)} /></Field>
-          <div className="ad-row">
+          <div className="cp-row">
             <Button variant="primary" disabled={!d.briefDirty} onClick={d.saveBrief}>Save</Button>
             <ConfirmButton onConfirm={d.remove} confirm="Delete project and its messages?">Delete project</ConfirmButton>
           </div>
@@ -92,7 +92,7 @@ export function ProjectsTab({ c, a }: { c: Client; a: ClientActions }) {
           </RowButton>
         ))}
       </RowList>
-      <form className="ad-row" onSubmit={t.create}>
+      <form className="cp-row" onSubmit={t.create}>
         <input placeholder="New project name, e.g. Website redesign" value={t.name} onChange={(e) => t.setName(e.target.value)} maxLength={120} />
         <Button type="submit" disabled={t.name.trim().length < 2}>New project</Button>
       </form>

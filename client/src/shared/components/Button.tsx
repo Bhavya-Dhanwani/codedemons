@@ -6,7 +6,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 export const buttonClass = ({ variant, size, className }: Pick<ButtonProps, 'variant' | 'size' | 'className'> = {}) =>
-  ['ad-btn', variant, size, className].filter(Boolean).join(' ')
+  ['cp-btn', variant, size, className].filter(Boolean).join(' ')
 
 /** The panel button (admin, portal, auth). Defaults to type="button"; pass type="submit" for forms. */
 export function Button({ variant, size, className, type = 'button', ...rest }: ButtonProps) {

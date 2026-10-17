@@ -17,7 +17,7 @@ function InvoiceRow({ i, onPaid, onDelete }: { i: InvoiceRowData; onPaid: () => 
       <span className="crm-val">{i.amountText}</span>
       <Status kind="i" status={i.status}>{i.statusText}</Status>
       {i.open && (
-        <div className="ad-row">
+        <div className="cp-row">
           <Button onClick={onPaid}>Mark paid</Button>
           <ConfirmButton size="sq" aria-label="Delete invoice" onConfirm={onDelete}>×</ConfirmButton>
         </div>
@@ -30,7 +30,7 @@ export function PaymentsTab({ c, a }: { c: Client; a: ClientActions }) {
   const p = usePaymentsTab(c, a)
   return (
     <>
-      {!p.adding && <div className="ad-row spread"><b>{p.heading}</b><Button variant="primary" onClick={p.startAdding}>New invoice</Button></div>}
+      {!p.adding && <div className="cp-row spread"><b>{p.heading}</b><Button variant="primary" onClick={p.startAdding}>New invoice</Button></div>}
       {p.adding && (
         <form className="crm-callout col" onSubmit={p.submit}>
           <Field label="For"><input placeholder="e.g. Website, first 50%" {...p.field('title')} required /></Field>
@@ -46,7 +46,7 @@ export function PaymentsTab({ c, a }: { c: Client; a: ClientActions }) {
             </Field>
           )}
           <p className="crm-hint">{p.hint}</p>
-          <div className="ad-row">
+          <div className="cp-row">
             <Button type="submit" variant="primary">Create invoice</Button>
             {p.canCancel && <Button variant="ghost" onClick={p.cancel}>Cancel</Button>}
           </div>

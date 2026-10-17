@@ -15,7 +15,7 @@ export function ContentEditor({ res, item, onClose, onSaved }: Props) {
       <Button variant="ghost" onClick={onClose}>Cancel</Button>
       <Button type="submit" form="content-editor" variant="primary" disabled={ed.busy}>{ed.busy ? 'Saving' : 'Save'}</Button>
     </>}>
-      <form id="content-editor" className="ad-fields" onSubmit={ed.submit}>
+      <form id="content-editor" className="cp-fields" onSubmit={ed.submit}>
         {res.fields.map((f) => <FieldControl key={f.key} f={f} v={ed.d[f.key]} set={ed.set} setList={ed.setList} />)}
       </form>
     </Drawer>

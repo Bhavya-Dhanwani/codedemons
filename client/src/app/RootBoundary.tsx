@@ -19,14 +19,14 @@ export class RootBoundary extends Component<{ children: ReactNode }, { error: Er
     const { error } = this.state
     if (!error) return this.props.children
     return (
-      <main className="ad-login">
+      <main className="cp-login">
         <div className="crash">
           <h1>Something went wrong.</h1>
           <p>This page hit an error. Reloading usually fixes it. If it keeps happening, send us the message below.</p>
           <code>{error.message || String(error)}</code>
-          <div className="ad-row">
-            <button type="button" className="ad-btn primary" onClick={() => location.reload()}>Reload</button>
-            <button type="button" className="ad-btn ghost" onClick={this.signOut}>Sign out and start over</button>
+          <div className="cp-row">
+            <button type="button" className="cp-btn primary" onClick={() => location.reload()}>Reload</button>
+            <button type="button" className="cp-btn ghost" onClick={this.signOut}>Sign out and start over</button>
           </div>
         </div>
       </main>

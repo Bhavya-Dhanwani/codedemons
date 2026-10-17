@@ -8,7 +8,7 @@ export default function AdminLayout() {
   const a = useAdminLayout()
   if (!a.signedIn) return <Navigate to="/admin/login" replace />
   return (
-    <div className="ad">
+    <div className="cp">
       <TopBar tabs={a.tabs} actions={<>
         <Link to="/" className={buttonClass({ variant: 'ghost' })}>View site</Link>
         <Button variant="ghost" onClick={a.logout}>Log out</Button>

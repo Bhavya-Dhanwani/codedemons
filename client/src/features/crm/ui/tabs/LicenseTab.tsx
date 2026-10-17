@@ -23,7 +23,7 @@ export function LicenseTab({ c, a }: { c: Client; a: ClientActions }) {
         <div><span className="mono">Status</span><b>{l.status.text}</b>{l.status.paid && <small>{l.status.paid}</small>}</div>
         <label className="lic-switch">
           <span>{l.on ? 'On' : 'Off'}</span>
-          <input type="checkbox" className="ad-switch" checked={l.on} onChange={l.toggle} aria-label="Website on" />
+          <input type="checkbox" className="cp-switch" checked={l.on} onChange={l.toggle} aria-label="Website on" />
         </label>
       </div>
       <p className="crm-hint">Switching off takes effect on the site within about 10 minutes.</p>
@@ -38,21 +38,21 @@ export function LicenseTab({ c, a }: { c: Client; a: ClientActions }) {
       <Field label="Maintenance page visitors see while it's down" as="div">
         <button type="button" className="mp-card" onClick={l.design.start}>
           <CanvasView c={l.design.canvas} />
-          <span className="mp-card-foot"><b>{l.design.custom ? 'Custom design' : 'Default page'}</b><span className="ad-btn primary">Open designer</span></span>
+          <span className="mp-card-foot"><b>{l.design.custom ? 'Custom design' : 'Default page'}</b><span className="cp-btn primary">Open designer</span></span>
         </button>
       </Field>
       {l.design.open && <CanvasDesigner initial={l.design.canvas} message={l.design.message} logo={l.design.logo} onSave={l.design.save} onClose={l.design.stop} />}
 
       <details className="crm-more">
         <summary>Domain, payment and message</summary>
-        <div className="ad-fields flat">
+        <div className="cp-fields flat">
           <Field label="Domain" hint="Only works on this domain and its subdomains. Empty = any domain."><input placeholder="clientsite.com" {...l.field('domain')} /></Field>
           <div className="two">
             <Field label="Paid until" hint="Empty = never expires"><input type="date" {...l.field('paidUntil')} /></Field>
             <Field label="Grace days" hint="Stays live this long after"><input type="number" min={0} max={90} {...l.field('graceDays')} /></Field>
           </div>
           <Field label="Message for apps and API calls" hint="Sent as the 503 error while the site is down (the page itself is designed above)"><input maxLength={300} placeholder="This website is under maintenance. Please check back soon." {...l.field('message')} /></Field>
-          <div className="ad-row">
+          <div className="cp-row">
             <Button variant="primary" disabled={!l.canSave} onClick={l.save}>Save</Button>
             <ConfirmButton onConfirm={l.replaceKey} confirm="Old key stops working. Sure?">Replace key</ConfirmButton>
           </div>

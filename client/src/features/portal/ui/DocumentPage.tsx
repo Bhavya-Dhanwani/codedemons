@@ -12,7 +12,7 @@ export default function DocumentPage() {
   if (!d.doc) return <ErrorText>{d.error}</ErrorText>
   return (
     <>
-      <div className="ad-row spread">
+      <div className="cp-row spread">
         <Link to="/portal/documents" className={buttonClass({ variant: 'ghost' })}>All documents</Link>
         <PdfButton doc={d.doc} />
       </div>

@@ -14,16 +14,16 @@ export function ContentRow({ res, item: i, first, last, drag, onUp, onDown, onTo
   const thumb = res.thumb(i)
   return (
     <li {...drag} className={i.published ? '' : 'draft'}>
-      <span className="ad-grip" aria-hidden>::</span>
-      <span className="ad-thumb" style={{ background: String(i.tint || '#e9e8e2') }}>
+      <span className="cp-grip" aria-hidden>::</span>
+      <span className="cp-thumb" style={{ background: String(i.tint || '#e9e8e2') }}>
         {thumb && <img src={ik(thumb, 'w-200')} alt="" />}
       </span>
-      <div className="ad-meta">
+      <div className="cp-meta">
         <b>{res.name(i)}</b>
         <span className="mono">{res.sub(i)}</span>
-        <span className="ad-badges">{res.badges(i).map((b) => <em key={b}>{b}</em>)}</span>
+        <span className="cp-badges">{res.badges(i).map((b) => <em key={b}>{b}</em>)}</span>
       </div>
-      <div className="ad-actions">
+      <div className="cp-actions">
         <Button variant="ghost" size="sq" onClick={onUp} disabled={first} aria-label="Move up">Up</Button>
         <Button variant="ghost" size="sq" onClick={onDown} disabled={last} aria-label="Move down">Down</Button>
         <Button variant="ghost" onClick={onTogglePublish}>{i.published ? 'Unpublish' : 'Publish'}</Button>

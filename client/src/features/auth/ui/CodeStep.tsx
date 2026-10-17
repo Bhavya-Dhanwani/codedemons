@@ -12,14 +12,14 @@ export function CodeStep({ email, intro, onBack }: { email: string; intro: strin
       intro={<>{intro}<b>{email}</b>. It works for 10 minutes.</>}
       error={c.error}
       onSubmit={c.submit}
-      foot={<button type="button" className="mono ad-back" onClick={onBack}>Use a different email</button>}
+      foot={<button type="button" className="mono cp-back" onClick={onBack}>Use a different email</button>}
     >
       <Field label="6 digit code" error={c.errors.code}>
         <input className="pt-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} {...c.field('code')} autoFocus />
       </Field>
       <Button type="submit" variant="primary" disabled={c.busy}>{c.busy ? 'Checking' : 'Log in'}</Button>
       {c.resend.sent && <p className="pt-ok" role="status">New code sent. Use the latest email.</p>}
-      <button type="button" className="mono ad-back" disabled={c.resend.disabled} onClick={c.resend.go}>{c.resend.text}</button>
+      <button type="button" className="mono cp-back" disabled={c.resend.disabled} onClick={c.resend.go}>{c.resend.text}</button>
     </AuthCard>
   )
 }

@@ -9,9 +9,9 @@ export default function PortalLayout() {
   if (!p.signedIn) return <Navigate to="/portal/login" replace />
   if (!p.me) return <CenterScreen>{p.error ? <ErrorText>{p.error}</ErrorText> : <Loading />}</CenterScreen>
   return (
-    <div className="ad">
+    <div className="cp">
       <TopBar tabs={p.tabs} actions={<Button variant="ghost" onClick={p.logout}>Log out</Button>} />
-      <section className="ad-panel pt">
+      <section className="cp-panel pt">
         <Outlet context={p.me} />
       </section>
     </div>

@@ -30,7 +30,7 @@ export default function ProjectPage() {
       <aside className="pj-side">
         {p.milestones.length > 0 && (
           <div className="pt-card">
-            <div className="ad-row spread"><span className="mono">Milestones</span><span className="mono">{v.progress.text}</span></div>
+            <div className="cp-row spread"><span className="mono">Milestones</span><span className="mono">{v.progress.text}</span></div>
             <div className="pt-bar"><i style={{ width: `${v.progress.pct}%` }} /></div>
             <ul className="checks readonly">
               {p.milestones.map((m, i) => <li key={i} className={m.done ? 'done' : ''}><span className="tick" aria-hidden>{m.done ? '✓' : ''}</span>{m.title}</li>)}

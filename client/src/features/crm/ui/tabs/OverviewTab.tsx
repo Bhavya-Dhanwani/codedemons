@@ -18,7 +18,7 @@ export function OverviewTab({ c, a, onDeleted }: { c: Client; a: ClientActions; 
       </Field>
 
       <Field label="Next follow up" as="div">
-        <div className="ad-row">
+        <div className="cp-row">
           <input type="date" value={o.followUp.value} onChange={(e) => o.followUp.set(e.target.value)} />
           <Button variant="ghost" onClick={o.followUp.tomorrow}>Tomorrow</Button>
           <Button variant="ghost" onClick={o.followUp.nextWeek}>Next week</Button>
@@ -39,13 +39,13 @@ export function OverviewTab({ c, a, onDeleted }: { c: Client; a: ClientActions; 
 
       <details className="crm-more">
         <summary>Contact details and deal value</summary>
-        <div className="ad-fields flat">
+        <div className="cp-fields flat">
           <Field label="Name"><input {...o.field('name')} /></Field>
           <Field label="Email"><input type="email" {...o.field('email')} /></Field>
           <Field label="Phone"><input type="tel" {...o.field('phone')} /></Field>
           <Field label="Company"><input {...o.field('company')} /></Field>
           <Field label="Deal value (₹)"><input type="number" min={0} {...o.field('value')} /></Field>
-          <div className="ad-row">
+          <div className="cp-row">
             <Button variant="primary" disabled={!o.dirty} onClick={o.saveDetails}>Save details</Button>
             <ConfirmButton onConfirm={o.remove} confirm="Delete everything?">Delete client</ConfirmButton>
           </div>

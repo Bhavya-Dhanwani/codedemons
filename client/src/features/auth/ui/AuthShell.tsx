@@ -25,5 +25,5 @@ export function AuthCard({ title, intro, error, onSubmit, children, foot }: Prop
 }
 
 export function AuthLink({ to, children }: { to: string; children: ReactNode }) {
-  return <Link to={to} className="mono ad-back">{children}</Link>
+  return <Link to={to} className="mono cp-back">{children}</Link>
 }

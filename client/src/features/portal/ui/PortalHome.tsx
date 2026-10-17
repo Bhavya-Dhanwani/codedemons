@@ -34,7 +34,7 @@ export default function PortalHome() {
       <div className="pj-cards">
         {h.projects.map((p) => (
           <Link key={p._id} to={`/portal/projects/${p._id}`} className="pj-card">
-            <div className="ad-row spread"><span className="mono">{p.phaseText}</span>{p.unread && <span className="pt-pill">New message</span>}</div>
+            <div className="cp-row spread"><span className="mono">{p.phaseText}</span>{p.unread && <span className="pt-pill">New message</span>}</div>
             <b>{p.name}</b>
             <div className="pt-bar"><i style={{ width: `${p.pct}%` }} /></div>
             <small>{p.progressText}</small>

@@ -40,7 +40,7 @@ function AiPanel({ e }: { e: DocEditorModel }) {
       {ai.writing
         ? <Button onClick={ai.stop}><i className="de-pulse" /> Stop writing</Button>
         : (
-          <div className="ad-row">
+          <div className="cp-row">
             <Button variant="primary" onClick={ai.write}>{ai.hasText ? 'Rewrite from scratch' : 'Write it'}</Button>
             {ai.hasText && <Button onClick={() => ai.revise()}>Edit this draft</Button>}
           </div>
@@ -49,7 +49,7 @@ function AiPanel({ e }: { e: DocEditorModel }) {
         <div className="de-asks">{QUICK_ASKS.map((q) => <button key={q} type="button" onClick={() => ai.revise(q)}>{q}</button>)}</div>
       )}
       {ai.canUndo && <Button variant="ghost" onClick={ai.undo}>Undo AI changes</Button>}
-      {ai.error && <p className="ad-err">{ai.error}</p>}
+      {ai.error && <p className="cp-err">{ai.error}</p>}
     </div>
   )
 }

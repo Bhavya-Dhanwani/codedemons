@@ -10,13 +10,13 @@ import { ContentEditor } from './ContentEditor'
 export default function ContentManager({ res }: { res: Resource }) {
   const m = useContentList(res)
   return (
-    <section className="ad-panel">
+    <section className="cp-panel">
       <PanelHead title={res.title} sub={m.summary} action={<Button variant="primary" onClick={m.openNew}>New {res.noun}</Button>} />
       <ErrorText onDismiss={m.clearError}>{m.error}</ErrorText>
       {m.items && !m.items.length && (
         <EmptyState><p>No {res.title.toLowerCase()} yet.</p><Button onClick={m.openNew}>Add the first one</Button></EmptyState>
       )}
-      <ol className="ad-list">
+      <ol className="cp-list">
         {m.items?.map((i, k, all) => (
           <ContentRow
             key={i._id} res={res} item={i} first={k === 0} last={k === all.length - 1} drag={m.dragProps(k)}

@@ -235,7 +235,7 @@ export function CanvasDesigner({ initial, message, logo, onSave, onClose }: Prop
           <button className={d.view === 'desktop' ? 'on' : ''} onClick={() => d.setView('desktop')}>Desktop</button>
           <button className={d.view === 'phone' ? 'on' : ''} onClick={() => d.setView('phone')}>Phone</button>
         </div>
-        <div className="ad-row">
+        <div className="cp-row">
           <Button variant="ghost" size="sq" disabled={!d.canUndo} onClick={d.undo} aria-label="Undo" title="Undo (Ctrl+Z)">↶</Button>
           <Button variant="ghost" size="sq" disabled={!d.canRedo} onClick={d.redo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)">↷</Button>
         </div>

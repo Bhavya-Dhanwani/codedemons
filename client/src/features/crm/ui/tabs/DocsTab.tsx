@@ -12,7 +12,7 @@ function AiStart({ ai }: { ai: Tab['ai'] }) {
   return (
     <div className="tpl-ai">
       <span className="mono">Write with AI</span>
-      <div className="ad-row">
+      <div className="cp-row">
         <select value={ai.kind} onChange={(e) => ai.setKind(e.target.value)} aria-label="Document type">
           {ai.kinds.map(([k, t]) => <option key={k} value={k}>{t}</option>)}
         </select>
@@ -26,7 +26,7 @@ function AiStart({ ai }: { ai: Tab['ai'] }) {
 function TemplatePicker({ t }: { t: Tab }) {
   return (
     <>
-      <div className="ad-row"><Button variant="ghost" onClick={t.back}>Back</Button><b>New document</b></div>
+      <div className="cp-row"><Button variant="ghost" onClick={t.back}>Back</Button><b>New document</b></div>
       <AiStart ai={t.ai} />
       <span className="mono pt-muted">Or start from a template</span>
       <div className="tpl-grid">
@@ -40,7 +40,7 @@ export function DocsTab({ c, a }: { c: Client; a: ClientActions }) {
   const t = useDocsTab(c)
   const list = (
     <>
-      <div className="ad-row spread"><b>{t.heading}</b><Button variant="primary" onClick={t.pickTemplate}>New document</Button></div>
+      <div className="cp-row spread"><b>{t.heading}</b><Button variant="primary" onClick={t.pickTemplate}>New document</Button></div>
       {!t.docs.length && <p className="crm-hint">Proposal, contract, NDA, SRS, onboarding: let AI write it from the brief, or pick a template. Edit right on the page, then send. They sign in their portal.</p>}
       <RowList>
         {t.docs.map((d) => (
