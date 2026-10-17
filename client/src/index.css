@@ -517,7 +517,7 @@ a:hover .roll > span + span { transform: translateY(0); }
 
 /* ---------- CRM ---------- */
 .cp-field select { width: 100%; font: inherit; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
-.cp-field input[type=date] { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
+.cp-field input[type=date] { font: inherit; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
 .cp-row.spread { justify-content: space-between; }
 .cp-row input:not([type=checkbox]) { flex: 1; min-width: 0; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .cp-btn.big { padding: 16px 28px; font-size: 16px; border-radius: 99px; }
@@ -583,7 +583,7 @@ a:hover .roll > span + span { transform: translateY(0); }
 .crm-callout.col > .cp-btn, .crm-callout.col .cp-row { justify-self: start; }
 .crm-callout > .sign { width: 100%; }
 .crm-hint { color: var(--muted); font-size: 13px; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
 .steps { display: flex; gap: 4px; }
 .steps li { flex: 1; }
 .steps li > * { width: 100%; display: block; padding: 10px 6px; text-align: center; font-size: 13px; font-weight: 500; border-top: 3px solid var(--line); color: var(--muted); }
@@ -893,3 +893,4 @@ body.de-open { overflow: hidden; }
 .crash h1 { font-size: 36px; font-weight: 500; letter-spacing: -.04em; }
 .crash p { color: var(--muted); }
 .crash code { display: block; padding: 12px 14px; background: var(--ink); color: #e9e8e2; border-radius: 10px; font: 12px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cp-field :is(select, input[type=date]) { height: 48px; box-sizing: border-box; }
