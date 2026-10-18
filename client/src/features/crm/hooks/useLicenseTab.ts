@@ -19,21 +19,28 @@ export function useLicenseTab(c: Client, a: ClientActions) {
   // pages designed before the canvas open as the same layout, ready to move around
   const canvas: Canvas = withDefaults(savedPage.canvas ?? fromClassic(savedPage, l.message))
   const logo = savedPage.logo || canvas.els.find((e) => e.t === 'image' && e.src)?.src || ''
-  const snippet = `<script src="${location.origin}/api/license/sdk.js" data-key="${l.key}"></script>`
-  // fullstack apps: the guard runs on their server, before their app
-  const serverSnippet = [
-    `curl -o license-guard.mjs ${location.origin}/api/license/guard.mjs`,
-    `curl -o license-guard.d.mts ${location.origin}/api/license/guard.d.mts   # TypeScript projects`,
-    '',
-    '// server entry, before every other route and static files:',
-    'import { licenseGuard } from "./license-guard.mjs"',
-    'app.use(licenseGuard({ key: process.env.CODEDEMONS_LICENSE }))',
-    '',
-    '// Next.js middleware / edge (Workers, Hono, Bun, Deno) instead:',
-    '// const blocked = await guard.respond(request); if (blocked) return blocked',
-    '',
-    `# .env\nCODEDEMONS_LICENSE=${l.key}`,
-  ].join('\n')
+  // two ways to install: the browser script (any site) or the server guard (fullstack apps, can't be blocked)
+  const install = {
+    script: `<script src="${location.origin}/api/license/sdk.js" data-key="${l.key}"></script>`,
+    download: [
+      `curl -o license-guard.mjs ${location.origin}/api/license/guard.mjs`,
+      `# TypeScript projects, also:`,
+      `curl -o license-guard.d.mts ${location.origin}/api/license/guard.d.mts`,
+    ].join('\n'),
+    server: [
+      '// before every other route and static file',
+      'import { licenseGuard } from "./license-guard.mjs"',
+      '',
+      'app.use(licenseGuard({ key: process.env.CODEDEMONS_LICENSE }))',
+    ].join('\n'),
+    edge: [
+      '// Next.js middleware, Workers, Hono, Bun, Deno',
+      'const guard = licenseGuard({ key: process.env.CODEDEMONS_LICENSE })',
+      'const blocked = await guard.respond(request)',
+      'if (blocked) return blocked',
+    ].join('\n'),
+    env: `CODEDEMONS_LICENSE=${l.key}`,
+  }
   const [text, tone] = LICENSE_STATE[c.licenseState]
   const goesDown = l.paidUntil && c.licenseState === 'grace' ? `, goes down ${day(new Date(new Date(l.paidUntil).getTime() + l.graceDays * 864e5).toISOString())}` : ''
   return {
@@ -42,8 +49,8 @@ export function useLicenseTab(c: Client, a: ClientActions) {
     on: l.on,
     toggle: () => a.patch({ license: { on: !l.on } }, l.on ? 'Website switched off' : 'Website switched on'),
     status: { text, tone, paid: l.paidUntil ? `Paid until ${day(l.paidUntil)}${goesDown}` : '' },
-    snippet,
-    serverSnippet,
+    key: l.key,
+    install,
     copy: (text: string) => navigator.clipboard.writeText(text).then(() => toast('Copied')),
     field: (k: keyof typeof d) => ({ value: d[k], onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setD({ ...d, [k]: e.target.value }) }),
     design: {

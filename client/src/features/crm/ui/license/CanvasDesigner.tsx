@@ -317,7 +317,7 @@ export function CanvasDesigner({ initial, logo, onSave, onClose }: Props) {
           <span className="mono cv-sec">Layers</span>
           <ol className="cv-layers">
             {d.c.els.map((e, i) => ({ e, i })).reverse().map(({ e, i }) => (
-              <li key={i}><button type="button" className={d.sel === i ? 'on' : ''} onClick={() => d.select(i)}>
+              <li key={i}><button type="button" className={d.sel === i ? 'on' : ''} onClick={() => d.select(i)} title={e.t === 'image' ? 'Image' : e.t === 'box' ? 'Shape' : e.text}>
                 <em>{{ text: '¶', button: '◉', image: '▣', box: '■' }[e.t]}</em><span>{e.t === 'image' ? 'Image' : e.t === 'box' ? 'Shape' : e.text || 'Empty'}</span>{d.phone && e.m?.hide && <small>hidden</small>}
               </button></li>
             ))}
