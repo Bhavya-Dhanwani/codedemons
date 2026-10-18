@@ -28,7 +28,7 @@ export const IMG = 'image/jpeg,image/png,image/webp,image/avif,image/gif'
 const VID = 'video/mp4,video/webm,video/quicktime'
 
 export const PROJECTS: Resource = {
-  path: '/admin/projects', publicKey: 'projects', title: 'Projects', noun: 'project',
+  path: '/admin/projects', publicKey: 'projects', title: 'Portfolio', noun: 'project',
   blank: { name: '', slug: '', kind: '', year: String(new Date().getFullYear()), client: '', services: [], intro: '', challenge: '', solution: '', results: [], tint: '#e9e8e2', liveUrl: '', cover: '', detail: '', gallery: [], video: '', featured: false, published: true },
   fields: [
     { key: 'name', label: 'Name', type: 'text', required: true },

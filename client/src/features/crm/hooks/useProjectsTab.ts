@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '../../../shared/hooks/useToast'
 import { ago, count, day, firstName, label } from '../../../shared/lib/format'
@@ -38,6 +38,12 @@ export function useProjectDetail(id: string, onDeleted: () => void) {
   const key = crmKeys.project(id)
   const q = useQuery({ queryKey: key, queryFn: () => crmApi.project(id), refetchInterval: 8000 })
   const p = q.data
+  // opening it marks their messages read: refresh the unread badges (tab, list, sidebar)
+  const seen = p?.messages.length
+  useEffect(() => {
+    if (seen === undefined) return
+    qc.invalidateQueries({ queryKey: crmKeys.all })
+  }, [seen, qc])
   const [milestone, setMilestone] = useState('')
   const [update, setUpdate] = useState('')
   const [brief, setBrief] = useState<{ name: string; brief: string } | null>(null)

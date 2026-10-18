@@ -100,7 +100,7 @@ async function smoke() {
     await page.fill('input[type="password"]', ADMIN.password);
     await page.click("button:has-text('Log in')");
     await page.getByRole("button", { name: "Log out" }).waitFor();
-    await page.getByRole("link", { name: "Projects" }).click(); // admin opens on Clients; tabs are router links
+    await page.getByRole("link", { name: "Portfolio" }).click(); // admin opens on Clients; the sidebar links are router links
     await page.waitForTimeout(1000);
     log("admin rows with Edit buttons:", await page.getByRole("button", { name: "Edit" }).count());
     await shot("admin");

@@ -59,6 +59,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, loader: () => redirect('/admin/clients') },
       { path: 'clients', lazy: page(() => import('../features/crm/ui/CrmPage')) },
+      { path: 'clients/:id', lazy: page(() => import('../features/crm/ui/ClientPage')) },
       { path: 'projects', lazy: manager(PROJECTS) },
       { path: 'reviews', lazy: manager(REVIEWS) },
     ],

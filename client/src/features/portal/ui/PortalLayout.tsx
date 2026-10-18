@@ -1,7 +1,6 @@
 import { Navigate, Outlet } from 'react-router'
-import { Button } from '../../../shared/components/Button'
+import { AppShell, SideAction } from '../../../shared/components/AppShell'
 import { CenterScreen, ErrorText, Loading } from '../../../shared/components/Feedback'
-import { TopBar } from '../../../shared/components/TopBar'
 import { usePortalLayout } from '../hooks/usePortalLayout'
 
 export default function PortalLayout() {
@@ -9,11 +8,13 @@ export default function PortalLayout() {
   if (!p.signedIn) return <Navigate to="/portal/login" replace />
   if (!p.me) return <CenterScreen>{p.error ? <ErrorText>{p.error}</ErrorText> : <Loading />}</CenterScreen>
   return (
-    <div className="cp">
-      <TopBar tabs={p.tabs} actions={<Button variant="ghost" onClick={p.logout}>Log out</Button>} />
+    <AppShell area="Client portal" nav={p.nav} foot={<>
+      <div className="app-who"><b>{p.me.name}</b>{p.me.company && <small>{p.me.company}</small>}</div>
+      <SideAction icon="out" onClick={p.logout}>Log out</SideAction>
+    </>}>
       <section className="cp-panel pt">
         <Outlet context={p.me} />
       </section>
-    </div>
+    </AppShell>
   )
 }

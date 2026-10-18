@@ -1,20 +1,18 @@
-import { Link, Navigate, Outlet } from 'react-router'
-import { Button, buttonClass } from '../../../shared/components/Button'
+import { Navigate, Outlet } from 'react-router'
+import { AppShell, SideAction } from '../../../shared/components/AppShell'
 import { Toast } from '../../../shared/components/Toast'
-import { TopBar } from '../../../shared/components/TopBar'
 import { useAdminLayout } from '../hooks/useAdminLayout'
 
 export default function AdminLayout() {
   const a = useAdminLayout()
   if (!a.signedIn) return <Navigate to="/admin/login" replace />
   return (
-    <div className="cp">
-      <TopBar tabs={a.tabs} actions={<>
-        <Link to="/" className={buttonClass({ variant: 'ghost' })}>View site</Link>
-        <Button variant="ghost" onClick={a.logout}>Log out</Button>
-      </>} />
+    <AppShell area="Studio admin" nav={a.nav} foot={<>
+      <SideAction icon="site" href="/">View site</SideAction>
+      <SideAction icon="out" onClick={a.logout}>Log out</SideAction>
+    </>}>
       <Outlet />
       <Toast />
-    </div>
+    </AppShell>
   )
 }

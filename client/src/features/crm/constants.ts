@@ -2,10 +2,12 @@ import type { LicenseState } from './types'
 
 export const STAGES = ['new', 'contacted', 'proposal', 'won', 'lost'] as const
 
-/** List filters: [server view, chip label] */
-export const VIEWS = [['due', 'Follow up'], ['inbox', 'Messages'], ['new', 'New'], ['contacted', 'Contacted'], ['proposal', 'Proposal'], ['won', 'Clients'], ['lost', 'Lost'], ['all', 'All']] as const
+/** The three ways to look at the list: [server view, label] */
+export const VIEWS = [['due', 'To follow up'], ['inbox', 'Unread messages'], ['all', 'Everyone']] as const
+/** Narrow to one stage of the pipeline */
+export const STAGE_VIEWS = [['new', 'New leads'], ['contacted', 'Contacted'], ['proposal', 'Proposal sent'], ['won', 'Clients'], ['lost', 'Lost']] as const
 
-export const CLIENT_TABS = ['Overview', 'Projects', 'Documents', 'Payments', 'License'] as const
+export const CLIENT_TABS = ['Overview', 'Projects', 'Documents', 'Payments', 'Website'] as const
 export type ClientTab = (typeof CLIENT_TABS)[number]
 
 /** License status: [text, tone class] */
