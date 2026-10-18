@@ -16,18 +16,55 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   return <label className="cv-row"><span>{label}</span>{children}</label>
 }
 
+const HEX = /^#[0-9a-f]{6}$/i
+
+/** Colour: picker plus hex box. A typed hex applies once it is a full #rrggbb, never half-typed. */
 function Color({ value, onChange, none }: { value: string; onChange: (v: string) => void; none?: string }) {
+  const [text, setText] = useState(value)
+  const [focus, setFocus] = useState(false)
+  useEffect(() => { if (!focus) setText(value) }, [value, focus])
+  const type = (v: string) => {
+    if (!/^#?[0-9a-f]{0,6}$/i.test(v)) return
+    const hex = v && !v.startsWith('#') ? '#' + v : v
+    setText(hex)
+    if (HEX.test(hex) && hex.toLowerCase() !== value.toLowerCase()) onChange(hex.toLowerCase())
+  }
   return (
     <span className="cv-color">
       <input type="color" value={value || '#ffffff'} onChange={(e) => onChange(e.target.value)} />
-      <input value={value} placeholder={none} maxLength={7} onChange={(e) => /^#?[0-9a-f]{0,6}$/i.test(e.target.value) && onChange(e.target.value.startsWith('#') ? e.target.value : '#' + e.target.value)} />
+      <input value={text} placeholder={none} maxLength={7} onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} onChange={(e) => type(e.target.value)} />
       {none && value && <button type="button" onClick={() => onChange('')} title={`No ${none}`}>×</button>}
     </span>
   )
 }
 
-function Num({ value, onChange, min, max, step = 1 }: { value: number; onChange: (v: number) => void; min: number; max: number; step?: number }) {
-  return <input type="number" value={Math.round(value / step) * step} min={min} max={max} step={step} onChange={(e) => e.target.value !== '' && onChange(Math.min(max, Math.max(min, Number(e.target.value))))} />
+/**
+ * Number box you can type into freely (e.g. 100 when the minimum is 8): it applies after a short pause
+ * once the value is in range, and on Enter or leaving the box out-of-range values are pulled into range.
+ */
+function Num({ value, onChange, min, max }: { value: number; onChange: (v: number) => void; min: number; max: number }) {
+  const shown = String(Math.round(value))
+  const [text, setText] = useState(shown)
+  const [focus, setFocus] = useState(false)
+  useEffect(() => { if (!focus) setText(shown) }, [shown, focus])
+  useEffect(() => {
+    if (!focus) return
+    const n = Number(text)
+    if (text.trim() === '' || !Number.isFinite(n) || n < min || n > max || n === Math.round(value)) return
+    const t = setTimeout(() => onChange(n), 450)
+    return () => clearTimeout(t)
+  }, [text]) // eslint-disable-line react-hooks/exhaustive-deps
+  const settle = () => {
+    const n = Number(text)
+    if (text.trim() === '' || !Number.isFinite(n)) { setText(shown); return }
+    const v = Math.min(max, Math.max(min, Math.round(n)))
+    setText(String(v))
+    if (v !== Math.round(value)) onChange(v)
+  }
+  return (
+    <input type="number" inputMode="numeric" value={text} min={min} max={max} onChange={(e) => setText(e.target.value)}
+      onFocus={() => setFocus(true)} onBlur={() => { setFocus(false); settle() }} onKeyDown={(e) => e.key === 'Enter' && settle()} />
+  )
 }
 
 function Slider({ value, onChange, min, max, step }: { value: number; onChange: (v: number) => void; min: number; max: number; step: number }) {
@@ -35,7 +72,7 @@ function Slider({ value, onChange, min, max, step }: { value: number; onChange: 
 }
 
 /** Typing straight onto the canvas: the text is set once, read back on blur. */
-function InlineText({ e, onDone }: { e: CanvasEl; onDone: (text: string) => void }) {
+function InlineText({ e, phone, onDone }: { e: CanvasEl; phone: boolean; onDone: (text: string) => void }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const n = ref.current!
@@ -44,7 +81,7 @@ function InlineText({ e, onDone }: { e: CanvasEl; onDone: (text: string) => void
     getSelection()?.selectAllChildren(n)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <ElView e={{ ...e, text: '', src: '' }} className="editing" ref={ref} contentEditable suppressContentEditableWarning
+    <ElView e={{ ...e, text: '', src: '' }} phone={phone} className="editing" ref={ref} contentEditable suppressContentEditableWarning
       onBlur={() => onDone((ref.current?.innerText ?? '').replace(/\n$/, ''))}
       onPaste={(x) => { x.preventDefault(); document.execCommand('insertText', false, x.clipboardData.getData('text/plain')) }}
       onPointerDown={(x) => x.stopPropagation()} />
@@ -57,9 +94,16 @@ function Inspector({ d }: { d: Designer }) {
   const set = (p: Partial<CanvasEl>) => d.patch(i, p)
   const typed = e.t === 'text' || e.t === 'button'
   const linkBad = !!e.href.trim() && !LINK.test(e.href.trim())
+  const g = d.selGeo!
   return (
     <>
       <div className="cv-head"><b>{{ text: 'Text', button: 'Button', image: 'Image', box: 'Shape' }[e.t]}</b><Button variant="ghost" size="sq" onClick={() => d.select(null)} aria-label="Deselect">×</Button></div>
+      {d.phone && (
+        <div className="cv-note">
+          <label className="cv-check"><input type="checkbox" checked={!!e.m?.hide} onChange={(x) => d.hideOnPhone(i, x.target.checked)} /> Hide on phones</label>
+          <small>Position and size here are for phones only. Text and styles are shared with desktop.</small>
+        </div>
+      )}
       {typed && <textarea className="cv-textarea" rows={3} value={e.text} maxLength={600} onChange={(x) => set({ text: x.target.value })} />}
       {e.t === 'button' && (
         <Row label="Link">
@@ -88,7 +132,7 @@ function Inspector({ d }: { d: Designer }) {
               {Object.keys(FONTS).map((f) => <option key={f} value={f}>{{ sans: 'Sans', serif: 'Serif', mono: 'Mono', round: 'Rounded' }[f]}</option>)}
             </select>
           </Row>
-          <Row label="Size"><Num value={e.size} min={8} max={240} onChange={(size) => set({ size })} /></Row>
+          <Row label={d.phone ? 'Size on phone' : 'Size'}><Num value={g.size} min={8} max={240} onChange={(size) => d.geo(i, { size })} /></Row>
           <Row label="Weight">
             <select value={e.weight} onChange={(x) => set({ weight: Number(x.target.value) })}>{WEIGHTS.map((w) => <option key={w} value={w}>{w}</option>)}</select>
           </Row>
@@ -123,13 +167,17 @@ function Inspector({ d }: { d: Designer }) {
       <Row label="Corners"><Num value={e.radius} min={0} max={720} onChange={(radius) => set({ radius })} /></Row>
       <Row label="Opacity"><Slider value={e.opacity} min={0} max={1} step={0.05} onChange={(opacity) => set({ opacity })} /></Row>
 
-      <span className="mono cv-sec">Position</span>
+      <span className="mono cv-sec">{d.phone ? 'Position on phone' : 'Position'}</span>
       <div className="cv-xywh">
-        {(['x', 'y', 'w', 'h'] as const).map((k) => <label key={k}><span>{k.toUpperCase()}</span><Num value={e[k]} min={k === 'x' ? -1280 : k === 'y' ? -720 : 8} max={2560} onChange={(v) => set({ [k]: v })} /></label>)}
+        {(['x', 'y', 'w', 'h'] as const).map((k) => (
+          <label key={k}><span>{k.toUpperCase()}</span>
+            <Num value={g[k]} min={k === 'x' ? -d.SW : k === 'y' ? -d.SH : 8} max={k === 'x' || k === 'w' ? d.SW * 2 : d.SH * 2} onChange={(v) => d.geo(i, { [k]: v })} />
+          </label>
+        ))}
       </div>
       <div className="cv-btns">
-        <Button onClick={() => d.patch(i, { x: (1280 - e.w) / 2 })}>Centre ↔</Button>
-        <Button onClick={() => d.patch(i, { y: (720 - e.h) / 2 })}>Centre ↕</Button>
+        <Button onClick={() => d.geo(i, { x: (d.SW - g.w) / 2 })}>Centre ↔</Button>
+        <Button onClick={() => d.geo(i, { y: (d.SH - g.h) / 2 })}>Centre ↕</Button>
         <Button onClick={() => d.layer(i, 'front')}>To front</Button>
         <Button onClick={() => d.layer(i, 'back')}>To back</Button>
         <Button onClick={() => d.duplicate(i)}>Duplicate</Button>
@@ -185,6 +233,13 @@ function PagePanel({ d }: { d: Designer }) {
     <>
       <div className="cv-head"><b>Page</b></div>
       <p className="crm-hint">Click anything on the canvas to style it. Double-click text to type.</p>
+      {d.phone && (
+        <div className="cv-note">
+          <b>Phone layout</b>
+          <small>Move, resize and hide things for phones without changing the desktop page. Text, colours and fonts are shared.</small>
+          <ConfirmButton onConfirm={d.resetPhone} confirm="Redo the phone layout?">Rebuild from desktop</ConfirmButton>
+        </div>
+      )}
       <ThemePicker d={d} />
       <span className="mono cv-sec">Background</span>
       <Row label="Colour"><Color value={c.bg} onChange={(bg) => d.page({ bg })} /></Row>
@@ -205,26 +260,28 @@ function PagePanel({ d }: { d: Designer }) {
 
 function Stage({ d }: { d: Designer }) {
   const c = d.c
+  const g = d.selGeo
   return (
-    <div className="cv-stage edit" ref={d.stage} style={backOf(c)} onPointerDown={() => d.select(null)}>
+    <div className={'cv-stage edit' + (d.phone ? ' phone' : '')} ref={d.stage} style={backOf(c)} onPointerDown={() => d.select(null)}>
       {c.els.map((e, i) => (d.editing === i
-        ? <InlineText key={i} e={e} onDone={(t) => d.finishEditing(i, t)} />
-        : <ElView key={i} e={e} placeholder className={d.sel === i ? 'on' : ''} onPointerDown={(x) => d.startMove(i, x)} onDoubleClick={() => d.startEditing(i)} />))}
-      {d.selected && d.editing === null && (
-        <div className="cv-sel" style={{ ...box(d.selected), transform: d.selected.rot ? `rotate(${d.selected.rot}deg)` : undefined }}>
+        ? <InlineText key={i} e={e} phone={d.phone} onDone={(t) => d.finishEditing(i, t)} />
+        : <ElView key={i} e={e} phone={d.phone} placeholder className={d.sel === i ? 'on' : ''} onPointerDown={(x) => d.startMove(i, x)} onDoubleClick={() => d.startEditing(i)} />))}
+      {d.selected && g && d.editing === null && (
+        <div className="cv-sel" style={{ ...box(g, d.phone), transform: d.selected.rot ? `rotate(${d.selected.rot}deg)` : undefined }}>
           {HANDLES.map((h) => <i key={h} className={'h-' + h} onPointerDown={(x) => d.startResize(d.sel!, h, x)} />)}
         </div>
       )}
-      {d.guides.x !== undefined && <div className="cv-guide v" style={{ left: `${d.guides.x / 12.8}%` }} />}
-      {d.guides.y !== undefined && <div className="cv-guide hz" style={{ top: `${d.guides.y / 7.2}%` }} />}
+      {d.guides.x !== undefined && <div className="cv-guide v" style={{ left: `${(d.guides.x / d.SW) * 100}%` }} />}
+      {d.guides.y !== undefined && <div className="cv-guide hz" style={{ top: `${(d.guides.y / d.SH) * 100}%` }} />}
     </div>
   )
 }
-type Props = { initial: Canvas; message: string; logo: string; onSave: (c: Canvas) => Promise<boolean>; onClose: () => void }
+
+type Props = { initial: Canvas; logo: string; onSave: (c: Canvas) => Promise<boolean>; onClose: () => void }
 
 /** Full screen designer for the page visitors see while a client's site is down. */
-export function CanvasDesigner({ initial, message, logo, onSave, onClose }: Props) {
-  const d = useCanvasDesigner(initial, message, logo, onSave, onClose)
+export function CanvasDesigner({ initial, logo, onSave, onClose }: Props) {
+  const d = useCanvasDesigner(initial, logo, onSave, onClose)
   useEffect(() => { document.body.classList.add('de-open'); return () => document.body.classList.remove('de-open') }, [])
   return createPortal(
     <div className="de cv" role="dialog" aria-label="Maintenance page designer">
@@ -261,17 +318,15 @@ export function CanvasDesigner({ initial, message, logo, onSave, onClose }: Prop
           <ol className="cv-layers">
             {d.c.els.map((e, i) => ({ e, i })).reverse().map(({ e, i }) => (
               <li key={i}><button type="button" className={d.sel === i ? 'on' : ''} onClick={() => d.select(i)}>
-                <em>{{ text: '¶', button: '◉', image: '▣', box: '■' }[e.t]}</em><span>{e.t === 'image' ? 'Image' : e.t === 'box' ? 'Shape' : e.text || 'Empty'}</span>
+                <em>{{ text: '¶', button: '◉', image: '▣', box: '■' }[e.t]}</em><span>{e.t === 'image' ? 'Image' : e.t === 'box' ? 'Shape' : e.text || 'Empty'}</span>{d.phone && e.m?.hide && <small>hidden</small>}
               </button></li>
             ))}
           </ol>
         </aside>
 
         <div className="cv-center">
-          {d.view === 'desktop'
-            ? <div className="cv-fit"><Stage d={d} /></div>
-            : <div className="cv-phone"><iframe title="Phone preview" sandbox="" srcDoc={d.phoneHtml} /></div>}
-          <p className="cv-tip mono">{d.view === 'desktop' ? 'Drag to move · handles resize (Shift keeps shape) · double-click to type · arrows nudge · Alt turns off snapping' : 'On tall phone screens the page becomes one centred column, top to bottom. Shapes are hidden.'}</p>
+          <div className={'cv-fit' + (d.phone ? ' phone' : '')}><Stage d={d} /></div>
+          <p className="cv-tip mono">{d.phone ? 'Phone layout · drag, resize and hide things for phones; the desktop page stays as it is' : 'Drag to move · handles resize (Shift keeps shape) · double-click to type · arrows nudge · Alt turns off snapping'}</p>
         </div>
 
         <aside className="cv-right">{d.selected ? <Inspector d={d} /> : <PagePanel d={d} />}</aside>

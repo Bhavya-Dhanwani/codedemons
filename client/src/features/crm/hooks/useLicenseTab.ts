@@ -47,7 +47,7 @@ export function useLicenseTab(c: Client, a: ClientActions) {
     copy: (text: string) => navigator.clipboard.writeText(text).then(() => toast('Copied')),
     field: (k: keyof typeof d) => ({ value: d[k], onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setD({ ...d, [k]: e.target.value }) }),
     design: {
-      canvas, logo, message: l.message,
+      canvas, logo,
       custom: !!savedPage.canvas,
       open: designing,
       start: () => setDesigning(true),

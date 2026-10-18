@@ -48,7 +48,10 @@ const canvasSchema = z.object({
         fill2: z.union([z.literal(""), hex]).default(""), fangle: n(0, 360).default(135), clip: z.boolean().default(false),
         bw: n(0, 40).default(0), bc: hex.default("#0d0d12"), shadow: n(0, 1).default(0), rot: n(-180, 180).default(0),
         upper: z.boolean().default(false), underline: z.boolean().default(false), fit: z.enum(["contain", "cover"]).default("contain"),
+        // position and size on the 390x844 phone layout (null = not laid out for phones)
+        m: z.union([z.null(), z.object({ x: n(-390, 780), y: n(-844, 1688), w: n(4, 780), h: n(4, 1688), size: n(8, 240), hide: z.boolean() })]).default(null),
     })).max(60),
+    mobile: z.boolean().default(false),
 });
 
 const clientSchema = z.object({

@@ -1,19 +1,21 @@
 import type { HTMLAttributes, Ref } from 'react'
-import { backOf, styleOf } from '../../lib/canvas'
+import { backOf, inView, styleOf } from '../../lib/canvas'
 import type { Canvas, CanvasEl } from '../../types'
 
-type ElProps = HTMLAttributes<HTMLElement> & { e: CanvasEl; placeholder?: boolean; ref?: Ref<HTMLDivElement> }
+type ElProps = HTMLAttributes<HTMLElement> & { e: CanvasEl; placeholder?: boolean; phone?: boolean; ref?: Ref<HTMLDivElement> }
 
 /** One element, drawn with the same rules as the live page. */
-export function ElView({ e, placeholder, className = '', ...rest }: ElProps) {
-  const cls = `cv-e cv-${e.t} ${className}`
+export function ElView({ e: raw, placeholder, phone = false, className = '', ...rest }: ElProps) {
+  const e = inView(raw, phone)
+  const st = styleOf(e, phone)
+  const cls = `cv-e cv-${e.t} ${className}${phone && raw.m?.hide ? ' off-phone' : ''}`
   if (e.t === 'image') {
-    if (e.src) return <img {...(rest as HTMLAttributes<HTMLImageElement>)} className={cls} style={styleOf(e)} src={e.src} alt="" draggable={false} />
-    return placeholder ? <div {...rest} className={cls + ' empty'} style={styleOf(e)}><span>Image: upload in the panel</span></div> : null
+    if (e.src) return <img {...(rest as HTMLAttributes<HTMLImageElement>)} className={cls} style={st} src={e.src} alt="" draggable={false} />
+    return placeholder ? <div {...rest} className={cls + ' empty'} style={st}><span>Image: upload in the panel</span></div> : null
   }
-  if (e.t === 'box') return <div {...rest} className={cls} style={styleOf(e)} />
-  if (e.t === 'button' && e.src) return <div {...rest} className={cls} style={styleOf(e)}><img src={e.src} alt="" draggable={false} className="cv-icon" />{e.text && <span>{e.text}</span>}</div>
-  return <div {...rest} className={cls} style={styleOf(e)}>{e.text}</div>
+  if (e.t === 'box') return <div {...rest} className={cls} style={st} />
+  if (e.t === 'button' && e.src) return <div {...rest} className={cls} style={st}><img src={e.src} alt="" draggable={false} className="cv-icon" />{e.text && <span>{e.text}</span>}</div>
+  return <div {...rest} className={cls} style={st}>{e.text}</div>
 }
 
 /** The whole page, read only: thumbnails and template previews. */

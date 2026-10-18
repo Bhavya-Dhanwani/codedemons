@@ -22,8 +22,13 @@ export type CanvasEl = {
   /** border width (stage px) and colour, shadow strength 0..1, rotation in degrees */
   bw: number; bc: string; shadow: number; rot: number
   upper: boolean; underline: boolean; fit: 'contain' | 'cover'
+  /** where it sits on the 390x844 phone layout (null until the page has one) */
+  m: PhoneBox | null
 }
-export type Canvas = { bg: string; bg2: string; bg3?: string; bgType?: 'linear' | 'radial'; angle: number; img: string; dim: number; els: CanvasEl[] }
+export type PhoneBox = { x: number; y: number; w: number; h: number; size: number; hide: boolean }
+export type Canvas = { bg: string; bg2: string; bg3?: string; bgType?: 'linear' | 'radial'; angle: number; img: string; dim: number; els: CanvasEl[]
+  /** the page has its own phone layout (each element's m) */
+  mobile?: boolean }
 export type License = { key: string; domain: string; on: boolean; paidUntil: string | null; graceDays: number; message: string; page?: Partial<MaintenancePage> }
 export type Milestone = { title: string; done: boolean }
 

@@ -25,8 +25,6 @@ export const crmApi = {
   deleteProject: (pid: string) => api.del(`${P}/${pid}`),
   sendMessage: (pid: string, text: string) => api.post<ProjectFull>(`${P}/${pid}/messages`, { text }),
   postUpdate: (pid: string, text: string) => api.post<ProjectFull>(`${P}/${pid}/updates`, { text }),
-  /** the maintenance page as visitors get it (HTML), for the designer's previews */
-  maintenancePreview: (body: { canvas: object; message: string }) => api.post<{ html: string }>('/admin/maintenance/preview', body),
 
   createInvoice: (id: string, body: object) => api.post<unknown>(`${C}/${id}/invoices`, body),
   markPaid: (invoiceId: string) => api.post<unknown>(`/admin/invoices/${invoiceId}/paid`),

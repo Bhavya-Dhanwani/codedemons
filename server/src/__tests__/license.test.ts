@@ -81,3 +81,18 @@ describe('maintenance page styling', () => {
     expect(html).toContain('background-clip:text');
   });
 });
+
+describe('maintenance page phone layout', () => {
+  it('uses each element phone box on tall screens and hides what is hidden there', () => {
+    const base = { t: 'text', x: 0, y: 0, w: 640, h: 100, text: 'Hi', size: 64 };
+    const html = maintenancePage({ p: { c: { bg: '#ffffff', mobile: true, els: [
+      { ...base, m: { x: 39, y: 84.4, w: 312, h: 84.4, size: 30, hide: false } },
+      { ...base, text: 'Desktop only', m: { x: 0, y: 0, w: 10, h: 10, size: 10, hide: true } },
+    ] } } });
+    expect(html).toMatch(/--mx:10%;--my:10[.0-9]*%;--mw:80%;--mh:10[.0-9]*%;--mfs:30/);
+    expect(html).toContain('aspect-ratio:390/844');
+    expect(html).toMatch(/class="cd-e cd-text cd-mh"[^>]*>Desktop only/);
+    // no phone layout: the old single column
+    expect(maintenancePage({ p: { c: { bg: '#ffffff', els: [base] } } })).toContain('flex-direction:column');
+  });
+});

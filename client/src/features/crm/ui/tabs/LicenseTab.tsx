@@ -41,7 +41,7 @@ export function LicenseTab({ c, a }: { c: Client; a: ClientActions }) {
           <span className="mp-card-foot"><b>{l.design.custom ? 'Custom design' : 'Default page'}</b><span className="cp-btn primary">Open designer</span></span>
         </button>
       </Field>
-      {l.design.open && <CanvasDesigner initial={l.design.canvas} message={l.design.message} logo={l.design.logo} onSave={l.design.save} onClose={l.design.stop} />}
+      {l.design.open && <CanvasDesigner initial={l.design.canvas} logo={l.design.logo} onSave={l.design.save} onClose={l.design.stop} />}
 
       <details className="crm-more">
         <summary>Domain, payment and message</summary>

@@ -1,11 +1,14 @@
 import type { CSSProperties } from 'react'
-import type { Canvas, CanvasEl, MaintenancePage } from '../types'
+import type { Canvas, CanvasEl, MaintenancePage, PhoneBox } from '../types'
 
 // The maintenance page is a 1280x720 stage. Positions are stored in stage pixels and drawn with % and
 // container query units, exactly like server/src/modules/public/license/license.page.ts, so what you
 // design here is what visitors get at any screen size. Keep the two in step.
 export const W = 1280
 export const H = 720
+/** the phone layout's stage */
+export const PW = 390
+export const PH = 844
 export const FONTS: Record<CanvasEl['font'], string> = {
   sans: "system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
   serif: "Georgia,'Times New Roman',serif",
@@ -24,11 +27,42 @@ export const ink = (h: string) => {
 const BASE: CanvasEl = {
   t: 'text', x: 0, y: 0, w: 200, h: 60, text: '', src: '', href: '', size: 24, weight: 400, italic: false,
   font: 'sans', align: 'left', color: '#0d0d12', fill: '', radius: 0, opacity: 1, spacing: 0, lh: 1.2,
-  fill2: '', fangle: 135, clip: false, bw: 0, bc: '#0d0d12', shadow: 0, rot: 0, upper: false, underline: false, fit: 'contain',
+  fill2: '', fangle: 135, clip: false, bw: 0, bc: '#0d0d12', shadow: 0, rot: 0, upper: false, underline: false, fit: 'contain', m: null,
 }
 export const el = (e: Partial<CanvasEl>): CanvasEl => ({ ...BASE, ...e })
 /** Saved designs from before a field existed get its default. */
-export const withDefaults = (c: Canvas): Canvas => ({ bg3: '', bgType: 'linear', ...c, els: c.els.map(el) })
+export const withDefaults = (c: Canvas): Canvas => ({ bg3: '', bgType: 'linear', mobile: false, ...c, els: c.els.map(el) })
+
+/** The element as drawn in a view: on the phone, its phone box and size. */
+export const inView = (e: CanvasEl, phone: boolean): CanvasEl => (phone && e.m ? { ...e, x: e.m.x, y: e.m.y, w: e.m.w, h: e.m.h, size: e.m.size } : e)
+
+/** A first phone box for an element: centred, scaled down to fit a phone. */
+export function phoneBox(e: CanvasEl): PhoneBox {
+  const CW = PW - 48
+  let w = CW, h = e.h, size = e.size
+  if (e.t === 'image') { w = Math.min(CW, 200, e.w); h = Math.round((w * e.h) / e.w) }
+  else if (e.t === 'box') { w = Math.min(PW, Math.round(e.w * 0.3)); h = Math.round(e.h * 0.3) }
+  else {
+    size = Math.max(14, Math.round(e.size * 0.55))
+    if (e.t === 'button') { w = Math.min(CW, Math.max(160, Math.round(e.w * 0.8))); h = Math.max(44, Math.round(e.h * 0.8)) }
+    else {
+      const perLine = Math.max(1, Math.floor(w / (size * 0.55)))
+      const lines = e.text.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(l.length / perLine)), 0)
+      h = Math.ceil(lines * size * e.lh) + 8
+    }
+  }
+  return { x: Math.round((PW - w) / 2), y: Math.round((PH - h) / 2), w, h, size, hide: e.t === 'box' }
+}
+
+/** First phone layout: everything in one centred column, top to bottom as on desktop; shapes hidden. */
+export function phoneLayout(c: Canvas): Canvas {
+  const order = c.els.map((_, i) => i).sort((a, b) => c.els[a].y - c.els[b].y || c.els[a].x - c.els[b].x)
+  const boxes = c.els.map(phoneBox)
+  let y = 0
+  for (const i of order) if (!boxes[i].hide) { boxes[i].y = y; y += boxes[i].h + 20 }
+  const top = Math.max(40, Math.round((PH - (y - 20)) / 2))
+  return { ...c, mobile: true, els: c.els.map((e, i) => ({ ...e, m: boxes[i].hide ? boxes[i] : { ...boxes[i], y: boxes[i].y + top } })) }
+}
 
 /** A new element of a kind, centred on the stage (nudged so several don't stack exactly). */
 export function newEl(kind: 'heading' | 'text' | 'button' | 'image' | 'box', c: Canvas): CanvasEl {
@@ -110,11 +144,14 @@ export function backOf(c: Canvas): CSSProperties {
   return { background: back }
 }
 
-export const box = (e: Pick<CanvasEl, 'x' | 'y' | 'w' | 'h'>): CSSProperties => ({ left: `${e.x / 12.8}%`, top: `${e.y / 7.2}%`, width: `${e.w / 12.8}%`, height: `${e.h / 7.2}%` })
+export const box = (e: Pick<CanvasEl, 'x' | 'y' | 'w' | 'h'>, phone = false): CSSProperties => {
+  const [sw, sh] = phone ? [PW / 100, PH / 100] : [W / 100, H / 100]
+  return { left: `${e.x / sw}%`, top: `${e.y / sh}%`, width: `${e.w / sw}%`, height: `${e.h / sh}%` }
+}
 
 /** Inline style of one element, the same rules the server uses. */
-export function styleOf(e: CanvasEl): CSSProperties {
-  const s: CSSProperties & Record<string, string | number> = { ...box(e), opacity: e.opacity, '--fs': e.size, '--r': e.radius }
+export function styleOf(e: CanvasEl, phone = false): CSSProperties {
+  const s: CSSProperties & Record<string, string | number> = { ...box(e, phone), opacity: e.opacity, '--fs': e.size, '--r': e.radius }
   if (e.bw) s.border = `calc(${e.bw} * var(--u)) solid ${e.bc}`
   if (e.shadow) s.boxShadow = `0 calc(${Math.round(e.shadow * 30)} * var(--u)) calc(${Math.round(e.shadow * 80)} * var(--u)) rgba(0,0,0,${(e.shadow * 0.55).toFixed(2)})`
   if (e.rot) s.transform = `rotate(${e.rot}deg)`
@@ -151,5 +188,8 @@ export const applyTheme = (c: Canvas, t: Theme): Canvas => ({
 
 /** Whole numbers for positions, nothing the server would refuse. */
 export const clean = (c: Canvas): Canvas => ({
-  ...c, els: c.els.map((e) => ({ ...e, x: Math.round(e.x), y: Math.round(e.y), w: Math.max(4, Math.round(e.w)), h: Math.max(4, Math.round(e.h)), text: e.text.slice(0, 600) })),
+  ...c, els: c.els.map((e) => ({
+    ...e, x: Math.round(e.x), y: Math.round(e.y), w: Math.max(4, Math.round(e.w)), h: Math.max(4, Math.round(e.h)), text: e.text.slice(0, 600),
+    m: e.m && { ...e.m, x: Math.round(e.m.x), y: Math.round(e.m.y), w: Math.max(4, Math.round(e.m.w)), h: Math.max(4, Math.round(e.m.h)), size: Math.round(e.m.size) },
+  })),
 })
