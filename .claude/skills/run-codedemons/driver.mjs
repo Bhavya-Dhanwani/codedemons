@@ -56,7 +56,7 @@ async function up() {
     await waitFor(`${API}/api/health`).catch((e) => { throw new Error(`${e.message}\n${Buffer.concat(api.out)}`); });
     log("api", API);
 
-    // Vite's proxy is hardcoded to :5000 in vite.config.ts; override it here instead of editing the repo
+    // Vite's proxy is hardcoded to :5001 in vite.config.ts; override it here instead of editing the repo
     // logLevel silent: Vite 8 echoes every browser console line to the terminal; page errors are collected in smoke() instead
     const { createServer } = await import(pathToFileURL(path.join(clientDir, "node_modules/vite/dist/node/index.js")).href);
     vite = await createServer({ root: clientDir, logLevel: "silent", server: { port: WEB_PORT, strictPort: true, proxy: { "/api": API, "/uploads": API } } });

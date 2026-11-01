@@ -5,7 +5,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // the Express API (server/) runs on :5000
-    proxy: { '/api': 'http://localhost:5000' },
+    // the Express API (server/) runs on :5001
+    proxy: { '/api': 'http://localhost:5001' },
   },
 })
